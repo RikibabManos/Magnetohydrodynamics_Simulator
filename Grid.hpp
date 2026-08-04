@@ -42,16 +42,16 @@ struct Grid {
 
 public:
     int nx, ny;     // number of physical visible cells in x and y
-    int ng;     // number of ghost cells on each side (2 for MUSCL, 3 for WENO)
+    int ng;     // number of ghost cells on each side of the physical grid (2 for MUSCL, 3 for WENO)
     int nxt, nyt;      // total number of cells in x and y
 
-    // Variables on cell centres: Conservative variables
+    // Variables on cell centres: Conservative variables (density, momentum (x/y), Energy, B field (x/y)
     std::vector<double> rho, mx, my, E, bxc, byc; // Cell B field = average of face values
 
     // Variables on face centres: B field
     std::vector<double> bxf, byf;
 
-    // Primitive variables (cell centered)
+    // Primitive variables (cell centered) (velocity (x/y) and pressure)
     std::vector<double> vx, vy, p;
 
     // Constructor function
