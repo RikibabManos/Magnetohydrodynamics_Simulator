@@ -1,0 +1,103 @@
+1. Grid:
+  Structure:
+      - 1 large grid with an array for each variable (Struct of Arrays data layout) 
+      - Each array has the details for a quantity at each grid index
+      - Two types of arrays based on quantity type: Cell centered and face centered 
+          - Most quantities are cell centered, and the value refers to the average within that cell
+              - e.g. Cell centered B_x (bxc) is the average B field in the x direction within the cell  
+          - B is calculated on the edges of the cells (the faces) as part of the constrained transport method of 
+            enforcing div B = 0 because you can use the values at each face to calculate the flux within the cell
+      - The size of the physical grid is nx in x-dir and ny in y-dir --> total grid = (0,0) to (nx-1,ny-1) 
+      - The spatial reconstruction methods that are used to calculate the flux requires 2-3 cells on either side of 
+        the cell in question
+          - In order to make sure the boundary cells can read values correctly (e.g. cell at (0,y) has no cells to its left), 
+            an amount of ghost cells are included in the grid (cells that arent visible but take values) 
+          - For MUSCL, 2 ghost cells are needed on either side of the reference cell, so the
+            total grid size is (0,0) to (nx + 2*ng, ny + 2*ng), which is simplified to (nxt,nyt)
+      - There are two types of quantities that are relevant in fluid dynamics: primitive and conserved quantities 
+          - Primitive quantities are the direct physical properties of a flow
+          - Conserved quantities are quantities that directly result from conservation laws
+  
+  Functions:
+      - Constructor initialises each array and makes them empty using .assign(nCell, 0.0)
+      - indexC converts the cell coordinates into its position in the list
+          - i.e. for nxt = nyt = 10, indexC(4,3) would return 34
+      - gi, gj (grid i/j) = optional QoL function, can be used to convert coordinates in the real grid into the actual grid
+          - i.e. if you wanted (2,3) from the PHYSICAL grid, this is (4,5) in the actual due to ghost cells
+          - gi and gj functions skip the need for that logic if you would like to just focus on physical grid spaces so that
+            you dont accidentally reference ghost cells
+          - May also be useful later if we change ng = 2 to ng = 3 for WENO as it avoids having to change every index in code later
+      - fillOneField() takes in a quantity, and fills in all the ghost cells with the correct values so they are up to date
+          - Takes the value from the cell on the opposite end, 2D grid can be considered looped and that the 
+            left+right edges are joined together etc. (like a torus) 
+      - computeCellB() takes the average of the face-centered B fields to calculate the cell centered B field
+      - fillGhostPeriodic() is a helper function that calls fillOneField() for all variables
+      - computePrimitives() calculates the primitive quantities from the conserved quantities using standard equations
+
+
+2. MUSCL
+  Structure:
+      - Performs 2D spatial reconstruction to calculate interface states from cell-centered averages
+      - This code implements a MUSCL algorithm
+          - Uses linear extrapolation within each cell to calculate values at faces
+          - Uses slope limiters to maintain TVD (Total Variation Diminishing) properties 
+              - Prevents non-physical oscillations (spurious overshoot/undershoot) near shocks and steep gradients
+      - Stores reconstructed state variables at cell boundaries in `ReconstructedValues`
+          - Holds left (L) and right (R) state vectors for X-direction faces, and Up (U) / Down (D) for Y-direction faces
+          - Hydrodynamic primitive variables (rho, vx, vy, p) are reconstructed along both X and Y directions
+          - Magnetic fields are reconstructed tangentially using cell-centered averages (bxc, byc)
+              - B_x is reconstructed across Y-faces (bxYFaceL/R) using cell-centered bxc
+              - B_y is reconstructed across X-faces (byXFaceL/R) using cell-centered byc
+              - Normal B components on faces do not need MUSCL reconstruction as they are handled directly by Constrained Transport (CT)
+      - Reconstruction loop iterates over the physical grid plus adjacent ghost cells (from gi(-1) to gi(nx))
+          - Guarantees that interface states at the physical domain boundaries are fully populated for the Riemann solver
+  
+  Functions:
+      - minmod(): slope limiter helper function
+          - Compares left and right gradients; returns the gradient with the smaller magnitude if both have the same sign
+          - Returns 0.0 if gradients have opposite signs (identifies local extrema/peaks and drops locally to 1st order)
+      - FaceValues: simple data structure bundling the reconstructed left (L) and right (R) face values for a single cell
+      - Direction: enum class used to select the spatial sweep axis (Direction::X or Direction::Y)
+      - MUSCLReconstructOne(): performs 1D linear spatial extrapolation for a single scalar variable in cell (i, j)
+          - Calculates forward and backward differences (leftSlope and rightSlope) along the direction (X/Y)
+              - Left = lower index face and Right = higher index face
+              - For cell (i,j) in x-dir: L = (i-0.5,j) and R = (i+0.5,j) 
+          - Limits the slope via minmod() and extrapolates values to the cell boundaries:
+              - L = F[i,j] - 0.5 * slope (value at the left/bottom interface of cell i,j)
+              - R = F[i,j] + 0.5 * slope (value at the right/top interface of cell i,j)
+      - ReconstructedValues: container struct holding 1D contiguous vectors for all reconstructed interface quantities
+          - Constructor allocates and zeros out memory for all face arrays using .assign(nCell, 0.0)
+      - FieldEntry: helper struct linking a target grid quantity (e.g. g.rho) to its corresponding 4 face output vectors (L, R, U, D)
+          - Allows batched iteration over primitive variables in MUSCLReconstructAll() to reduce repetitive code
+      - MUSCLReconstructAll(): executes MUSCLReconstructOne() across the full grid for all values
+          - Loops over the grid (inc. ghost cells) and populates all face-reconstructed values in `RV`
+
+
+3. HLL
+  Structure:
+      - Evaluates interface fluxes for 2D Ideal MHD using the HLL Riemann Solver
+      - Operates on pairs of reconstructed states at cell interfaces:
+          - X-direction interfaces solve Riemann problems between Left (i - 1/2) and Right (i + 1/2) states
+          - Y-direction interfaces solve Riemann problems between Down (j - 1/2) and Up (j + 1/2) states
+      - Converts primitive physical variables (rho, vx, vy, p, bx, by) to conserved vectors (rho, mx, my, E, bx, by)
+      - Uses 2-wave approximation bounded by fastest and slowest wave speeds:
+          - Bounded by the fast magnetosonic wave speed (fast_ms_v) computed from thermal, Alfven, and normal B-fields
+          - Ignores intermediate Alfven and slow magnetosonic discontinuities (restores stability, will be expanded to HLLD later)
+      - 3-region flux selection logic per interface:
+          - Pure upwind Left/Down flux if slowest wave speed >= 0
+          - Pure upwind Right/Up flux if fastest wave speed <= 0
+          - Star-state HLL weighted flux vector if waves span across zero (colliding waves in region)
+  
+  Functions:
+      - PrimitiveState: struct grouping primitive variables for a single state
+      - ConservedState: struct grouping conserved density, momentum components, total energy, and B-fields
+          - fromPrimitive(): static method calculating ConservedState from parameter PrimitiveState
+      - FluxVector: struct holding calculated flux components across a cell face
+      - convertPrimitiveX(): computes flux vector F(W) in X-dir from PrimitiveState W
+          - Incorporates total pressure (P_tot = p + 0.5*B^2) into normal momentum flux F.mx
+          - Induction flux F.bx = 0.0 across X-interface
+      - convertPrimitiveY(): (Y equivalent to X func) computes flux vector G(W) in Y-dir from PrimitiveState W
+      - getFastWaveSpeed(): computes fast magnetosonic speed v_fast = sqrt(0.5 * (a^2 + b^2 + sqrt((a^2 + b^2)^2 - 4*a^2*c^2)))
+          - Takes primitive state and normal B-field component (bn)
+      - computeHLLFluxX(): calculates 1D HLL flux across an X-face between Left (L) and Right (R) states
+      - computeHLLFluxY(): calculates 1D HLL flux across a Y-face between Down (D) and Up (U) states
