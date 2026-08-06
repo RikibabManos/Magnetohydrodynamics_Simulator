@@ -4,40 +4,6 @@
 #include <cstddef>
 #include <cmath>
 
-// Structure:
-    // - 1 large grid with an array for each variable (Struct of Arrays data layout) 
-    // - Each array has the details for a quantity at each grid index
-    // - Two types of arrays based on quantity type: Cell centered and face centered 
-        // - Most quantities are cell centered, and the value refers to the average within that cell
-            // - e.g. Cell centered B_x (bxc) is the average B field in the x direction within the cell  
-        // - B is calculated on the edges of the cells (the faces) as part of the constrained transport method of 
-        //   enforcing div B = 0 because you can use the values at each face to calculate the flux within the cell
-    // - The size of the physical grid is nx in x-dir and ny in y-dir --> total grid = (0,0) to (nx-1,ny-1) 
-    // - The spatial reconstruction methods that are used to calculate the flux requires 2-3 cells on either side of 
-    //   the cell in question
-        // - In order to make sure the boundary cells can read values correctly (e.g. cell at (0,y) has no cells to its left), 
-        //   an amount of ghost cells are included in the grid (cells that arent visible but take values) 
-        // - For MUSCL, 2 ghost cells are needed on either side of the reference cell, so the
-        //   total grid size is (0,0) to (nx + 2*ng, ny + 2*ng), which is simplified to (nxt,nyt)
-    // - There are two types of quantities that are relevant in fluid dynamics: primitive and conserved quantities 
-        // - Primitive quantities are the direct physical properties of a flow
-        // - Conserved quantities are quantities that directly result from conservation laws
-
-// Functions:
-    // - Constructor initialises each array and makes them empty using .assign(nCell, 0.0)
-    // - indexC converts the cell coordinates into its position in the list
-        // - i.e. for nxt = nyt = 10, indexC(4,3) would return 34
-    // - gi, gj (grid i/j) = optional QoL function, can be used to convert coordinates in the real grid into the actual grid
-        // - i.e. if you wanted (2,3) from the PHYSICAL grid, this is (4,5) in the actual due to ghost cells
-        // - gi and gj functions skip the need for that logic if you would like to just focus on physical grid spaces so that
-        //   you dont accidentally reference ghost cells
-        // - May also be useful later if we change ng = 2 to ng = 3 for WENO as it avoids having to change every index in code later
-    // - fillOneField() takes in a quantity, and fills in all the ghost cells with the correct values so they are up to date
-        // - Takes the value from the cell on the opposite end, 2D grid can be considered looped and that the 
-        //   left+right edges are joined together etc. (like a torus) 
-    // - computeCellB() takes the average of the face-centered B fields to calculate the cell centered B field
-    // - fillGhostPeriodic() is a helper function that calls fillOneField() for all variables
-    // - computePrimitives() calculates the primitive quantities from the conserved quantities using standard equations
 struct Grid {
 
 public:
