@@ -8,35 +8,6 @@
 #include "Grid.hpp"
 #include "MUSCL.hpp"
 
-// Structure:
-    // - Evaluates interface fluxes for 2D Ideal MHD using the HLL Riemann Solver
-    // - Operates on pairs of reconstructed states at cell interfaces:
-        // - X-direction interfaces solve Riemann problems between Left (i - 1/2) and Right (i + 1/2) states
-        // - Y-direction interfaces solve Riemann problems between Down (j - 1/2) and Up (j + 1/2) states
-    // - Converts primitive physical variables (rho, vx, vy, p, bx, by) to conserved vectors (rho, mx, my, E, bx, by)
-    // - Uses 2-wave approximation bounded by fastest and slowest wave speeds:
-        // - Bounded by the fast magnetosonic wave speed (fast_ms_v) computed from thermal, Alfven, and normal B-fields
-        // - Ignores intermediate Alfven and slow magnetosonic discontinuities (restores stability, will be expanded to HLLD later)
-    // - 3-region flux selection logic per interface:
-        // - Pure upwind Left/Down flux if slowest wave speed >= 0
-        // - Pure upwind Right/Up flux if fastest wave speed <= 0
-        // - Star-state HLL weighted flux vector if waves span across zero (colliding waves in region)
-
-// Functions:
-    // - PrimitiveState: struct grouping primitive variables for a single state
-    // - ConservedState: struct grouping conserved density, momentum components, total energy, and B-fields
-        // - fromPrimitive(): static method calculating ConservedState from parameter PrimitiveState
-    // - FluxVector: struct holding calculated flux components across a cell face
-    // - convertPrimitiveX(): computes flux vector F(W) in X-dir from PrimitiveState W
-        // - Incorporates total pressure (P_tot = p + 0.5*B^2) into normal momentum flux F.mx
-        // - Induction flux F.bx = 0.0 across X-interface
-    // - convertPrimitiveY(): (Y equivalent to X func) computes flux vector G(W) in Y-dir from PrimitiveState W
-    // - getFastWaveSpeed(): computes fast magnetosonic speed v_fast = sqrt(0.5 * (a^2 + b^2 + sqrt((a^2 + b^2)^2 - 4*a^2*c^2)))
-        // - Takes primitive state and normal B-field component (bn)
-    // - computeHLLFluxX(): calculates 1D HLL flux across an X-face between Left (L) and Right (R) states
-    // - computeHLLFluxY(): calculates 1D HLL flux across a Y-face between Down (D) and Up (U) states
-
-
 // struct that holds primitive quantities for a state
 struct PrimitiveState {
     double rho; // Mass density (ρ)
