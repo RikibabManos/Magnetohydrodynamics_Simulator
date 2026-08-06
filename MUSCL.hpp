@@ -7,56 +7,27 @@
 #include <iostream>
 #include "Grid.hpp"
 
-// Structure:
-    // - Performs 2D spatial reconstruction to calculate interface states from cell-centered averages
-    // - This code implements a MUSCL algorithm
-        // - Uses linear extrapolation within each cell to calculate values at faces
-        // - Uses slope limiters to maintain TVD (Total Variation Diminishing) properties 
-            // - Prevents non-physical oscillations (spurious overshoot/undershoot) near shocks and steep gradients
-    // - Stores reconstructed state variables at cell boundaries in `ReconstructedValues`
-        // - Holds left (L) and right (R) state vectors for X-direction faces, and Up (U) / Down (D) for Y-direction faces
-        // - Hydrodynamic primitive variables (rho, vx, vy, p) are reconstructed along both X and Y directions
-        // - Magnetic fields are reconstructed tangentially using cell-centered averages (bxc, byc)
-            // - B_x is reconstructed across Y-faces (bxYFaceL/R) using cell-centered bxc
-            // - B_y is reconstructed across X-faces (byXFaceL/R) using cell-centered byc
-            // - Normal B components on faces do not need MUSCL reconstruction as they are handled directly by Constrained Transport (CT)
-    // - Reconstruction loop iterates over the physical grid plus adjacent ghost cells (from gi(-1) to gi(nx))
-        // - Guarantees that interface states at the physical domain boundaries are fully populated for the Riemann solver
-
-// Functions:
-    // - minmod(): slope limiter helper function
-        // - Compares left and right gradients; returns the gradient with the smaller magnitude if both have the same sign
-        // - Returns 0.0 if gradients have opposite signs (identifies local extrema/peaks and drops locally to 1st order)
-    // - FaceValues: simple data structure bundling the reconstructed left (L) and right (R) face values for a single cell
-    // - Direction: enum class used to select the spatial sweep axis (Direction::X or Direction::Y)
-    // - MUSCLReconstructOne(): performs 1D linear spatial extrapolation for a single scalar variable in cell (i, j)
-        // - Calculates forward and backward differences (leftSlope and rightSlope) along the direction (X/Y)
-            // - Left = lower index face and Right = higher index face
-            // - For cell (i,j) in x-dir: L = (i-0.5,j) and R = (i+0.5,j) 
-        // - Limits the slope via minmod() and extrapolates values to the cell boundaries:
-            // - L = F[i,j] - 0.5 * slope (value at the left/bottom interface of cell i,j)
-            // - R = F[i,j] + 0.5 * slope (value at the right/top interface of cell i,j)
-    // - ReconstructedValues: container struct holding 1D contiguous vectors for all reconstructed interface quantities
-        // - Constructor allocates and zeros out memory for all face arrays using .assign(nCell, 0.0)
-    // - FieldEntry: helper struct linking a target grid quantity (e.g. g.rho) to its corresponding 4 face output vectors (L, R, U, D)
-        // - Allows batched iteration over primitive variables in MUSCLReconstructAll() to reduce repetitive code
-    // - MUSCLReconstructAll(): executes MUSCLReconstructOne() across the full grid for all values
-        // - Loops over the grid (inc. ghost cells) and populates all face-reconstructed values in `RV`
-
+// returns the smallest of the two slopes
 double minmod(double a, double b) {
     if (a * b > 0.0) {
         return (std::abs(a) < std::abs(b)) ? a : b;
     }
+    // if a < 0 < b etc. then somewhere within this cell is a local extrema so take 0 as slope
     return 0.0;
 }
 
+// struct that holds values at left and right face
 struct FaceValues {double L, R;};
 
+// enum class for x and y direction for specificity
 enum class Direction { X, Y };
 
+// function that completes MUSCL on one cell for one field
 FaceValues MUSCLReconstructOne(const std::vector<double>& F, int i, int j, Direction dir, const Grid& g) {
     double leftSlope = 0;
     double rightSlope = 0;
+    
+    // calculates slope values by subtracting from the left or right neighbour (or up/down in y)
     if(dir == Direction::X){
         leftSlope  = F[g.indexC(i,j)]   - F[g.indexC(i-1,j)];
         rightSlope = F[g.indexC(i+1,j)] - F[g.indexC(i,j)];
@@ -65,9 +36,11 @@ FaceValues MUSCLReconstructOne(const std::vector<double>& F, int i, int j, Direc
         leftSlope  = F[g.indexC(i,j)]   - F[g.indexC(i,j-1)];
         rightSlope = F[g.indexC(i,j+1)] - F[g.indexC(i,j)];
     }
-    
+
+    // takes the lower value slope to avoid sharp changes in field
     double slope = minmod(leftSlope, rightSlope);
 
+    // extrapolates to faces from the cell centre using slope
     double L = F[g.indexC(i,j)] - 0.5*slope;
     double R = F[g.indexC(i,j)] + 0.5*slope;
     return {L, R};
@@ -75,6 +48,7 @@ FaceValues MUSCLReconstructOne(const std::vector<double>& F, int i, int j, Direc
 
 
 
+// struct that holds all output arrays from MUSCL 
 struct ReconstructedValues{
 std::vector<double> rhoXFaceL, rhoXFaceR, rhoYFaceL, rhoYFaceR,
                     vxXFaceL,  vxXFaceR,  vxYFaceL,  vxYFaceR,
@@ -83,7 +57,7 @@ std::vector<double> rhoXFaceL, rhoXFaceR, rhoYFaceL, rhoYFaceR,
                     bxYFaceL, bxYFaceR,
                     byXFaceL, byXFaceR;
 
-
+    // empty construction
     ReconstructedValues(const size_t nCell){
         rhoXFaceL.assign(nCell, 0.0); rhoXFaceR.assign(nCell, 0.0); rhoYFaceL.assign(nCell, 0.0); rhoYFaceR.assign(nCell, 0.0);
         vxXFaceL.assign(nCell, 0.0);  vxXFaceR.assign(nCell, 0.0);  vxYFaceL.assign(nCell, 0.0);  vxYFaceR.assign(nCell, 0.0);
@@ -95,6 +69,7 @@ std::vector<double> rhoXFaceL, rhoXFaceR, rhoYFaceL, rhoYFaceR,
 
 };
 
+// helper struct to group a field into one variable
 struct FieldEntry {
     const std::vector<double>& field;   // (e.g. g.rho)
     std::vector<double>& L;            
@@ -103,8 +78,9 @@ struct FieldEntry {
     std::vector<double>& D;
 };
 
-
+// main function that performs MUSCL on full grid
 void MUSCLReconstructAll(const Grid& g, ReconstructedValues& RV){
+    // creates an array of FieldEntrys to loop through when performing MUSCL on all fields
     std::vector<FieldEntry> Fields = {
       {g.rho, RV.rhoXFaceL, RV.rhoXFaceR, RV.rhoYFaceL, RV.rhoYFaceR},
       {g.vx, RV.vxXFaceL, RV.vxXFaceR, RV.vxYFaceL, RV.vxYFaceR},
@@ -118,25 +94,26 @@ void MUSCLReconstructAll(const Grid& g, ReconstructedValues& RV){
         int id = g.indexC(i, j);
 
             for (size_t a = 0; a < Fields.size(); a++){
-            FaceValues valuesX = MUSCLReconstructOne(Fields[a].field, i, j, Direction::X, g);
-            Fields[a].L[id] = valuesX.L; Fields[a].R[id] = valuesX.R;
-            
-            FaceValues valuesY = MUSCLReconstructOne(Fields[a].field, i, j, Direction::Y, g);
-            Fields[a].U[id] = valuesY.L; Fields[a].D[id] = valuesY.R;
+            // Perform MUSCL on values in x and y separately
+                FaceValues valuesX = MUSCLReconstructOne(Fields[a].field, i, j, Direction::X, g);
+                Fields[a].L[id] = valuesX.L; Fields[a].R[id] = valuesX.R;
+                
+                FaceValues valuesY = MUSCLReconstructOne(Fields[a].field, i, j, Direction::Y, g);
+                Fields[a].U[id] = valuesY.L; Fields[a].D[id] = valuesY.R;
             }
         
-            // --- Bx Reconstruction ---
+            // B field must be constructed manually as div B = 0 so bxXFaces and byYFaces come directly from grid
             // Y-dir (Tangential): Slope reconstruction using cell-centered bxc
             FaceValues bx_Y = MUSCLReconstructOne(g.bxc, i, j, Direction::Y, g);
-            RV.bxYFaceL[id] = bx_Y.L;                     // Bottom face (j - 1/2)
-            RV.bxYFaceR[id] = bx_Y.R;                     // Top face (j + 1/2)
+            RV.bxYFaceL[id] = bx_Y.L;                    
+            RV.bxYFaceR[id] = bx_Y.R;                     
 
 
             // --- By Reconstruction ---
             // X-dir (Tangential): Slope reconstruction using cell-centered byc
             FaceValues by_X = MUSCLReconstructOne(g.byc, i, j, Direction::X, g);
-            RV.byXFaceL[id] = by_X.L;                     // Left face (i - 1/2)
-            RV.byXFaceR[id] = by_X.R;                     // Right face (i + 1/2)
+            RV.byXFaceL[id] = by_X.L;                   
+            RV.byXFaceR[id] = by_X.R;                    
         }
     }
 }
