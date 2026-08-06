@@ -91,7 +91,7 @@ FluxVector convertPrimitiveY(PrimitiveState p) {
     double v_dot_B = p.vx * p.bx + p.vy * p.by;    // Velocity dot Magnetic field
     double E = p.p / (gamma - 1.0) + 0.5*(p.rho * v_sq + B_sq); // Total Energy Density E
 
-    // 3. Populate Flux components
+    // Populate Flux components
     FluxVector F;
     F.rho = p.rho * p.vy;
     F.my  = p.rho * p.vy * p.vy + P_tot - p.by * p.by;
