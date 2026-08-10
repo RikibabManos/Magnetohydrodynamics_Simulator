@@ -89,8 +89,8 @@ void MUSCLReconstructAll(const Grid& g, ReconstructedValues& RV){
     };
 
     
-    for (size_t i = g.gi(-1); i <= g.gi(g.nx); i++){
-        for (size_t j = g.gj(-1); j <= g.gj(g.ny); j++){
+    for (size_t j = g.gj(-1); j <= g.gi(g.nx); j++){
+        for (size_t i = g.gi(-1); i <= g.gi(g.ny); i++){
         int id = g.indexC(i, j);
 
             for (size_t a = 0; a < Fields.size(); a++){
