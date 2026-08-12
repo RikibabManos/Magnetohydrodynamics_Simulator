@@ -60,7 +60,7 @@ def update(frame):
     plot_nodes.set_array(current_rho_state)
     current_time = frame / frame_rate
     ax.set_title(                                                    
-        f"1D Thermal Conduction Profile (Time: {current_time:.2f}s)"
+        f"MHD SIM (Time: {current_time:.2f}s)"
     )
     
     return (plot_nodes, )
