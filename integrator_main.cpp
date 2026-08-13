@@ -296,7 +296,7 @@ int main(){
     int ghost_node_count = 2;
     int node_total = (x_node_count + 2 * ghost_node_count) * (y_node_count + 2 * ghost_node_count);
 
-        // initialise helper structs
+    // initialise helper structs
     integrator_reserved_memory memory_storage(node_total);
     ReconstructedValues MUSCL_memory(node_total);
     IMEX_Butcher_Tableus coefficients_tableu;
@@ -304,7 +304,8 @@ int main(){
     Grid global_state(x_node_count, y_node_count, 2);   
     global_state.cell_width = 1.0;
     global_state.cell_height = 1.0;
-
+    
+    // setting up pulse size and location
     double x_mid = 0.5 * x_node_count * global_state.cell_width;
     double y_mid = 0.5 * y_node_count * global_state.cell_height;
     double radius_sq = 10.0 * 10.0; // Width of the pulse
@@ -314,12 +315,30 @@ int main(){
             
             int idx = global_state.indexC(i, j);
         
-            // Coordinates relative to center
-            double x = (i - ghost_node_count + 0.5) * global_state.cell_width;
-            double y = (j - ghost_node_count + 0.5) * global_state.cell_height;
-            double dist_sq = (x - x_mid)*(x - x_mid) + (y - y_mid)*(y - y_mid);
-        
-            // Primitive values: Smooth Gaussian spike on uniform background
+            // coordinates relative to center (for gaussian test)
+            double x_relative = (i - ghost_node_count + 0.5) * global_state.cell_width;
+            double y_relative = (j - ghost_node_count + 0.5) * global_state.cell_height;
+            double dist_sq = (x_relative - x_mid) * (x_relative - x_mid) + (y_relative - y_mid) * (y_relative - y_mid);
+            
+            // acoustic wave test values
+            double amplitude = 0.1;
+            double x_position = (i - ghost_node_count) * global_state.cell_width;
+            double y_position = (j - ghost_node_count) * global_state.cell_height;
+            double physical_grid_width = global_state.cell_width * x_node_count;
+            double physical_grid_height = global_state.cell_height * y_node_count;
+            constexpr double pi = 3.14159265359;
+            constexpr double adiabatic_index = 5 / 3;
+            double x_sin = amplitude * sin(2 * pi * x_position / physical_grid_width);
+
+            // primitive values for 1D acoustic wave test
+            //double rho = 1.0 + x_sin;
+            //double vx  = x_sin;
+            //double vy  = 0.0;
+            //double p   = (1 + adiabatic_index * x_sin) * 0.6;
+            //double bx  = 0.0;
+            //double by  = 0.0;
+
+            // primitive values for gaussian test
             double rho = 1.0 + exp(-dist_sq / radius_sq);
             double vx  = 1.0;
             double vy  = 1.0;
@@ -330,7 +349,7 @@ int main(){
             PrimitiveState w{rho, vx, vy, p, bx, by};
             ConservedState u = ConservedState::fromPrimitive(w);
         
-            // Assign conserved fields
+            // assign conserved fields
             global_state.rho[idx] = u.rho;
             global_state.mx[idx]  = u.mx;
             global_state.my[idx]  = u.my;
@@ -338,52 +357,12 @@ int main(){
             global_state.bxc[idx] = u.bx;
             global_state.byc[idx] = u.by;
         
-            // Assign primitive fields
+            // assign primitive fields
             global_state.p[idx]  = p;
             global_state.vx[idx] = vx;
             global_state.vy[idx] = vy;
         }
     }
-
-//        // Set Brio-Wu shock tube test parameters aligned along x-direction
-//    for (int j = 0; j < y_node_count + 2 * ghost_node_count; ++j) {
-//        for (int i = 0; i < x_node_count + 2 * ghost_node_count; ++i) {
-//
-//            int idx = global_state.indexC(i - ghost_node_count, j - ghost_node_count);
-//            PrimitiveState assigned_values;
-//
-//            if (i < (x_node_count + 2 * ghost_node_count) / 2){
-//                assigned_values.rho = 1.0;
-//                assigned_values.vx = 0.0;
-//                assigned_values.vy = 0.0;
-//                assigned_values.p   = 1.0;
-//                assigned_values.bx = 0.75;
-//                assigned_values.by = 1.0;
-//            }
-//            else{
-//                assigned_values.rho = 0.125;
-//                assigned_values.p   = 0.1;
-//                assigned_values.vx = 0.0;
-//                assigned_values.vy = 0.0;
-//                assigned_values.bx = 0.75;
-//                assigned_values.by = -1.0;
-//            }
-//
-//            // now convert the primitive assigned variables to conserved to assign global state 
-//            ConservedState u = ConservedState::fromPrimitive(assigned_values);            
-//            global_state.rho[idx] = u.rho;
-//            global_state.mx[idx] = u.mx;
-//            global_state.my[idx] = u.my;
-//            global_state.E[idx] = u.E;
-//            global_state.bxc[idx] = u.bx;
-//            global_state.byc[idx] = u.by;
-//
-//            global_state.p[idx] = assigned_values.p;
-//            global_state.vx[idx] = assigned_values.vx;
-//            global_state.vy[idx] = assigned_values.vy;
-//
-//        }
-//    }
 
     Grid intermediary_grid_1(x_node_count, y_node_count, 2);
     Grid intermediary_grid_2(x_node_count, y_node_count, 2);
