@@ -308,7 +308,7 @@ int main(){
     // setting up pulse size and location
     double x_mid = 0.5 * x_node_count * global_state.cell_width;
     double y_mid = 0.5 * y_node_count * global_state.cell_height;
-    double radius_sq = 10.0 * 10.0; // Width of the pulse
+    double radius_sq = 10.0 * 10.0; // width of the pulse
     
     for (int j = 0; j < y_node_count + 2 * ghost_node_count; ++j) {
         for (int i = 0; i < x_node_count + 2 * ghost_node_count; ++i) {
