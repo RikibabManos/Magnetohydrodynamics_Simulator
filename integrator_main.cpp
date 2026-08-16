@@ -247,10 +247,10 @@ void sync_B_center_to_face_values(Grid& grid) { // interpolates the updated cell
             int left_neighbor = grid.indexC(i - 1, j);
             int bottom_neighbor = grid.indexC(i, j - 1);
 
-            // Left face is average of current center and left center
+            // left face is average of current center and left center
             grid.bxf[current] = 0.5 * (grid.bxc[current] + grid.bxc[left_neighbor]);
             
-            // Bottom face is average of current center and bottom center
+            // bottom face is average of current center and bottom center
             grid.byf[current] = 0.5 * (grid.byc[current] + grid.byc[bottom_neighbor]);
         }
     }
