@@ -90,14 +90,7 @@ void get_electric_field_at_cell_corners(integrator_reserved_memory& B_memory, Gr
 
             double advective_electric_field = 0.25 * ( electric_field_east + electric_field_north + electric_field_south + electric_field_west); // average of bottom left corner of cell surrounding node i,j
 
-            // calculated using the cell-centered B-fields to center J_z perfectly on the corner
-            double dBy_dx = (grid_B.byf[bottom_cell_index] - grid_B.byf[bottom_left_cell_index]) / grid_B.cell_width;
-            double dBx_dy = (grid_B.bxf[left_cell_index] - grid_B.bxf[bottom_left_cell_index]) / grid_B.cell_height;
-            
-            double J_z = dBy_dx - dBx_dy;
-            double resistive_electric_field = grid_B.resistivity * J_z;
-
-            B_memory.electric_field_at_corners[current_cell_index] = advective_electric_field + resistive_electric_field;
+            B_memory.electric_field_at_corners[current_cell_index] = advective_electric_field;
 
             
             
