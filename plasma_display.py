@@ -4,6 +4,21 @@ import matplotlib.animation as animation
 import matplotlib.gridspec as gridspec
 import glob
 
+def deal_with_visual_float_point_errors(max, min):
+    tolerance = 5e-5
+
+    if (max - min) < tolerance:
+        midpoint = (max + min) / 2
+
+        if abs(midpoint) < tolerance:
+            max = 0.1
+            min = -0.1
+        else:
+            max = midpoint + 0.1
+            min = midpoint - 0.1
+
+    return max, min
+
 # make python read binary data file
 
 data_file_list = glob.glob(r"C:\Codes\mhd_sim\snapshot_*.dat")
@@ -21,7 +36,9 @@ frame_rate = int(global_data_initial[3])
 cell_width = global_data_initial[4]
 cell_height = global_data_initial[5]
 time_between_frames = global_data_initial[6]
-global_data_initial = global_data_initial[7:] # remove header data
+root_mean_square_divergence_B = global_data_initial[7]
+max_norm_divergence_B = global_data_initial[8]
+global_data_initial = global_data_initial[9:] # remove header data
 
 rho_data = global_data_initial[0:total_node_count]
 E_data = global_data_initial[total_node_count: total_node_count * 2]
@@ -39,6 +56,14 @@ vx_2D = vx_data.reshape(y_node_total, x_node_total)
 vy_2D = vy_data.reshape(y_node_total, x_node_total)
 bx_2D = bx_data.reshape(y_node_total, x_node_total)
 by_2D = by_data.reshape(y_node_total, x_node_total)
+
+rho_2D = rho_2D[ghost_cell_count: -ghost_cell_count, ghost_cell_count: -ghost_cell_count]
+E_2D = E_2D[ghost_cell_count: -ghost_cell_count, ghost_cell_count: -ghost_cell_count]
+p_2D = p_2D[ghost_cell_count: -ghost_cell_count, ghost_cell_count: -ghost_cell_count]
+vx_2D = vx_2D[ghost_cell_count: -ghost_cell_count, ghost_cell_count: -ghost_cell_count]
+vy_2D = vy_2D[ghost_cell_count: -ghost_cell_count, ghost_cell_count: -ghost_cell_count]
+bx_2D = bx_2D[ghost_cell_count: -ghost_cell_count, ghost_cell_count: -ghost_cell_count]
+by_2D = by_2D[ghost_cell_count: -ghost_cell_count, ghost_cell_count: -ghost_cell_count]
 
 rho_max = np.max(rho_data)
 rho_min = np.min(rho_data)
@@ -61,17 +86,33 @@ bx_min = np.min(bx_data)
 by_max = np.max(by_data)
 by_min = np.min(by_data)
 
-# setup animation initial frame
-fig = plt.figure(figsize = (16, 8))
-gs = gridspec.GridSpec(2, 4, width_ratios = [1, 1, 1, 1])
+rho_max, rho_min = deal_with_visual_float_point_errors(rho_max, rho_min)
+E_max, E_min = deal_with_visual_float_point_errors(E_max, E_min)
+p_max, p_min = deal_with_visual_float_point_errors(p_max, p_min)
+vx_max, vx_min = deal_with_visual_float_point_errors(vx_max, vx_min)
+vy_max, vy_min = deal_with_visual_float_point_errors(vy_max, vy_min)
+bx_max, bx_min = deal_with_visual_float_point_errors(bx_max, bx_min)
+by_max, by_min = deal_with_visual_float_point_errors(by_max, by_min)
 
-ax_rho = fig.add_subplot(gs[:, 0])
+# setup animation initial frame
+fig = plt.figure(figsize = (18, 9))
+gs = gridspec.GridSpec(2, 4, width_ratios = [1, 1, 1, 1], wspace = 0.5, hspace = 0.5)
+
+ax_rho = fig.add_subplot(gs[0, 0])
+ax_div_B = fig.add_subplot(gs[1, 0])
 ax_E = fig.add_subplot(gs[0, 1])
 ax_p = fig.add_subplot(gs[1, 1])
 ax_vx = fig.add_subplot(gs[0, 2])
 ax_vy = fig.add_subplot(gs[1, 2])
 ax_bx = fig.add_subplot(gs[0, 3])
 ax_by = fig.add_subplot(gs[1, 3])
+
+div_B_rms = [root_mean_square_divergence_B]
+div_B_max = [max_norm_divergence_B]
+div_B_rms_line, = ax_div_B.plot([], [], color = 'red', label = 'RMS Divergence of B')
+#div_B_max_line, = ax_div_B.plot([], [], color = 'blue', label = 'Max absolute Divergence of B')
+time_history = [0]
+ax_div_B.legend()
 
 rho_heatmap = ax_rho.imshow(
     rho_2D,
@@ -154,71 +195,83 @@ fig.colorbar(by_heatmap, ax = ax_by, label = 'Magnetic Flux Density (y)')
 def update(frame):
     """ updates animation """
 
+    global time_history, div_B_rms, div_B_max
+
+    # if animation repeated, reset the line histories
+    if frame == 0:
+        time_history.clear()
+        div_B_rms.clear()
+        div_B_max.clear()
+
     current_global_state = np.fromfile(data_file_list[frame], dtype = np.float64)
-    current_rho_state = current_global_state[7: total_node_count + 7]
+    current_time = (frame + 1) * frame_rate * time_between_frames
+    time_history.append(current_time)
+    plt.suptitle(f"2D MHD Simulation Dashboard (Time: {current_time:.3f}s)", fontsize = 16, fontweight = 'bold')
+
+    div_B_rms.append(current_global_state[7])
+    #div_B_max.append(current_global_state[8])
+    div_B_rms_line.set_data(time_history, div_B_rms)
+    #div_B_max_line.set_data(time_history, div_B_max)
+    current_max = max(div_B_rms)
+    ax_div_B.set_ylim(0, max(current_max * 1.1, 1e-15))
+    ax_div_B.set_xlim(0, current_time if current_time > 0 else 1e-5)
+    
+    current_rho_state = current_global_state[9: total_node_count + 9]
     current_rho_2D = current_rho_state.reshape(y_node_total, x_node_total)
     rho_heatmap.set_array(current_rho_2D)
-    current_time = frame * frame_rate * time_between_frames
     ax_rho.set_title(                                                    
-        f"MHD Density SIM (Time: {current_time:.2f}s)"
+        "Density"
     )
 
-
-    current_E_state = current_global_state[7 + total_node_count: 2 *total_node_count + 7]
+    current_E_state = current_global_state[9 + total_node_count: 2 *total_node_count + 9]
     current_E_2D = current_E_state.reshape(y_node_total, x_node_total)
     E_heatmap.set_array(current_E_2D)
-    current_time = frame * frame_rate * time_between_frames
     ax_E.set_title(                                                    
-        f"MHD Energy SIM (Time: {current_time:.2f}s)"
+        "Energy"
     )
 
-    current_p_state = current_global_state[7 + total_node_count * 2: 3 * total_node_count + 7]
+    current_p_state = current_global_state[9 + total_node_count * 2: 3 * total_node_count + 9]
     current_p_2D = current_p_state.reshape(y_node_total, x_node_total)
     p_heatmap.set_array(current_p_2D)
-    current_time = frame * frame_rate * time_between_frames
     ax_p.set_title(                                                    
-        f"MHD Thermal Pressure SIM (Time: {current_time:.2f}s)"
+        "Thermal Pressure"
     )
 
-    current_vx_state = current_global_state[7 + total_node_count * 3: 4 * total_node_count + 7]
+    current_vx_state = current_global_state[9 + total_node_count * 3: 4 * total_node_count + 9]
     current_vx_2D = current_vx_state.reshape(y_node_total, x_node_total)
     vx_heatmap.set_array(current_vx_2D)
-    current_time = frame * frame_rate * time_between_frames
     ax_vx.set_title(                                                    
-        f"MHD Velocity (x) SIM (Time: {current_time:.2f}s)"
+        "Velocity (x)"
     )
 
-    current_vy_state = current_global_state[7 + total_node_count * 4: 5 * total_node_count + 7]
+    current_vy_state = current_global_state[9 + total_node_count * 4: 5 * total_node_count + 9]
     current_vy_2D = current_vy_state.reshape(y_node_total, x_node_total)
     vy_heatmap.set_array(current_vy_2D)
-    current_time = frame * frame_rate * time_between_frames
     ax_vy.set_title(                                                    
-        f"MHD Velocity (y) SIM (Time: {current_time:.2f}s)"
+        "Velocity (y)"
     )
 
-    current_bx_state = current_global_state[7 + total_node_count * 5: 6 * total_node_count + 7]
+    current_bx_state = current_global_state[9 + total_node_count * 5: 6 * total_node_count + 9]
     current_bx_2D = current_bx_state.reshape(y_node_total, x_node_total)
     bx_heatmap.set_array(current_bx_2D)
-    current_time = frame * frame_rate * time_between_frames
     ax_bx.set_title(                                                    
-        f"MHD B Field (x) SIM (Time: {current_time:.2f}s)"
+        "B Field (x)"
     )
 
-    current_by_state = current_global_state[7 + total_node_count * 6: 7 + total_node_count * 7]
+    current_by_state = current_global_state[9 + total_node_count * 6: 7 * total_node_count + 9]
     current_by_2D = current_by_state.reshape(y_node_total, x_node_total)
     by_heatmap.set_array(current_by_2D)
-    current_time = frame * frame_rate * time_between_frames
     ax_by.set_title(                                                    
-        f"MHD B Field (y) SIM (Time: {current_time:.2f}s)"
+        "B Field (y)"
     )
     
-    return (rho_heatmap, E_heatmap, p_heatmap, vx_heatmap, vy_heatmap, bx_heatmap, by_heatmap, )
+    return (div_B_rms_line, rho_heatmap, E_heatmap, p_heatmap, vx_heatmap, vy_heatmap, bx_heatmap, by_heatmap, )
 
 ani = animation.FuncAnimation(
     fig = fig,
     func = update,
     frames = len(data_file_list),
-    interval = 100,
+    interval = 50,
     blit = False,
     repeat = True
 )

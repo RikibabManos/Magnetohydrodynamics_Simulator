@@ -111,19 +111,19 @@ struct integrator_reserved_memory{ // 'scratchpad', allocates memory on stack on
 
     // cell centred B field in x direction
 
-    vector<double> f1_b_x_c;
-    vector<double> f2_b_x_c;
-    vector<double> g1_b_x_c;
-    vector<double> g2_b_x_c;    
-    vector<double> g3_b_x_c;
+    vector<double> f1_b_x_f;
+    vector<double> f2_b_x_f;
+    vector<double> g1_b_x_f;
+    vector<double> g2_b_x_f;    
+    vector<double> g3_b_x_f;
 
     // cell centred B field in y direction
 
-    vector<double> f1_b_y_c;
-    vector<double> f2_b_y_c;
-    vector<double> g1_b_y_c;
-    vector<double> g2_b_y_c;
-    vector<double> g3_b_y_c;
+    vector<double> f1_b_y_f;
+    vector<double> f2_b_y_f;
+    vector<double> g1_b_y_f;
+    vector<double> g2_b_y_f;
+    vector<double> g3_b_y_f;
 
     // flux values for each direction
 
@@ -159,8 +159,11 @@ struct integrator_reserved_memory{ // 'scratchpad', allocates memory on stack on
     Eigen::SparseMatrix<double> A_matrix;
 
     // no ghost padding vectors
-    vector<double> b_x_c_no_padding;
-    vector<double> b_y_c_no_padding;
+    vector<double> b_x_f_no_padding;
+    vector<double> b_y_f_no_padding;
+
+    // for electric field
+    vector<double> electric_field_at_corners;
 
 
     integrator_reserved_memory(int cell_total, int cell_total_no_ghost) // constructor which allocates required memory on heap once based off number of nodes
@@ -171,8 +174,8 @@ struct integrator_reserved_memory{ // 'scratchpad', allocates memory on stack on
      f1_m_x(cell_total, 0.0), f2_m_x(cell_total, 0.0), g1_m_x(cell_total, 0.0), g2_m_x(cell_total, 0.0), g3_m_x(cell_total, 0.0),  
      f1_m_y(cell_total, 0.0), f2_m_y(cell_total, 0.0), g1_m_y(cell_total, 0.0), g2_m_y(cell_total, 0.0), g3_m_y(cell_total, 0.0),
      f1_E(cell_total, 0.0), f2_E(cell_total, 0.0), g1_E(cell_total, 0.0), g2_E(cell_total, 0.0), g3_E(cell_total, 0.0),
-     f1_b_x_c(cell_total, 0.0), f2_b_x_c(cell_total, 0.0), g1_b_x_c(cell_total, 0.0), g2_b_x_c(cell_total, 0.0), g3_b_x_c(cell_total, 0.0),
-     f1_b_y_c(cell_total, 0.0), f2_b_y_c(cell_total, 0.0), g1_b_y_c(cell_total, 0.0), g2_b_y_c(cell_total, 0.0), g3_b_y_c(cell_total, 0.0),
+     f1_b_x_f(cell_total, 0.0), f2_b_x_f(cell_total, 0.0), g1_b_x_f(cell_total, 0.0), g2_b_x_f(cell_total, 0.0), g3_b_x_f(cell_total, 0.0),
+     f1_b_y_f(cell_total, 0.0), f2_b_y_f(cell_total, 0.0), g1_b_y_f(cell_total, 0.0), g2_b_y_f(cell_total, 0.0), g3_b_y_f(cell_total, 0.0),
      
      rho_flux_horizontal(cell_total, 0.0), rho_flux_vertical(cell_total, 0.0), 
      m_x_flux_horizontal(cell_total, 0.0), m_x_flux_vertical(cell_total, 0.0),
@@ -185,7 +188,9 @@ struct integrator_reserved_memory{ // 'scratchpad', allocates memory on stack on
 
      A_matrix(cell_total_no_ghost * cell_total_no_ghost, cell_total_no_ghost * cell_total_no_ghost),
     
-     b_x_c_no_padding(cell_total_no_ghost), b_y_c_no_padding(cell_total_no_ghost)
+     b_x_f_no_padding(cell_total_no_ghost), b_y_f_no_padding(cell_total_no_ghost),
+
+     electric_field_at_corners(cell_total, 0.0)
     {}
 };
 
