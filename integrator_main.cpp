@@ -67,9 +67,9 @@ void get_electric_field_at_cell_corners(integrator_reserved_memory& B_memory, Gr
     int total_x_nodes = grid_B.nx;
     int total_y_nodes = grid_B.ny;
 
-    int j_index_start = -1;
+    int j_index_start = 0;
     int j_index_end = total_y_nodes + 1;
-    int i_index_start = -1;
+    int i_index_start = 0;
     int i_index_end = total_x_nodes + 1;
 
     for (int j = j_index_start; j < j_index_end; j++){    
@@ -90,7 +90,14 @@ void get_electric_field_at_cell_corners(integrator_reserved_memory& B_memory, Gr
 
             double advective_electric_field = 0.25 * ( electric_field_east + electric_field_north + electric_field_south + electric_field_west); // average of bottom left corner of cell surrounding node i,j
 
-            B_memory.electric_field_at_corners[current_cell_index] = advective_electric_field;
+            // calculated using the cell-centered B-fields to center J_z perfectly on the corner
+            double dBy_dx = (grid_B.byf[bottom_cell_index] - grid_B.byf[bottom_left_cell_index]) / grid_B.cell_width;
+            double dBx_dy = (grid_B.bxf[left_cell_index] - grid_B.bxf[bottom_left_cell_index]) / grid_B.cell_height;
+            
+            double J_z = dBy_dx - dBx_dy;
+            double resistive_electric_field = grid_B.resistivity * J_z;
+
+            B_memory.electric_field_at_corners[current_cell_index] = advective_electric_field + resistive_electric_field;
 
             
             
@@ -322,11 +329,6 @@ void IMEX(Grid& grid_imex, Grid& grid_intermediary, Grid& grid_whole_step, integ
 
     // --- INTERMEDIARY STEP ---
 
-    // matrix setup 1
-    double matrix_coeff = dt * grid_imex.resistivity;
-    generate_A_matrix(grid_imex, workspace, matrix_coeff * coefficients.A_im[4]);
-    solver.compute(workspace.A_matrix);
-
     // calculate psuedo grid state due to explicit rhs only
 
     double total_explicit_coeff_1 = dt * coefficients.A_ex[3];
@@ -384,10 +386,6 @@ void IMEX(Grid& grid_imex, Grid& grid_intermediary, Grid& grid_whole_step, integ
     divergence_checker_values divergence_test_5 = calculate_current_div_B(grid_intermediary);
 
     // --- WHOLE STEP ---
-
-    // matrix setup 2
-    generate_A_matrix(grid_imex, workspace, matrix_coeff * coefficients.A_im[8]);
-    solver.compute(workspace.A_matrix);
 
     // generate intermediary step explicit derivative terms
 
@@ -579,6 +577,10 @@ int main(){
     global_state.cell_height = 2 * pi / y_node_count;
     global_state.resistivity = 0.0;
     CFL_condition_checker(time_interval, global_state);
+
+    double matrix_coeff = time_interval * global_state.resistivity;
+    generate_A_matrix(global_state, memory_storage, matrix_coeff * coefficients_tableu.A_im[4]);
+    matrix_solver.compute(memory_storage.A_matrix);
     
     // setting up pulse size and location
     double x_mid = 0.5 * x_node_count * global_state.cell_width;
@@ -706,6 +708,8 @@ int main(){
     binary_fout.close(); 
 
     for (double _ = 0; _ <= animation_duration; _ += time_interval){
+
+        std::cout << "Processing frame " << frame_index << " / " << animation_duration / time_interval - 1 << "..." << "\n";
 
         frame_index ++;
 
