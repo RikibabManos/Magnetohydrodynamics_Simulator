@@ -51,14 +51,12 @@ void get_divergences(integrator_reserved_memory& memory,  Grid& grid_div, global
             mx_derivative[current_node_index] = -( get_partial_derivative(memory.m_x_flux_horizontal[current_node_index], memory.m_x_flux_horizontal[left_node_index], cell_width) + get_partial_derivative(memory.m_x_flux_vertical[current_node_index], memory.m_x_flux_vertical[bottom_node_index], cell_height) );
             my_derivative[current_node_index] = -( get_partial_derivative(memory.m_y_flux_horizontal[current_node_index], memory.m_y_flux_horizontal[left_node_index], cell_width) + get_partial_derivative(memory.m_y_flux_vertical[current_node_index], memory.m_y_flux_vertical[bottom_node_index], cell_height) );
 
-            // 1. Force exact periodic wrapping to bypass any MUSCL ghost cell errors
             int i_right = (i + 1) % total_x_nodes;
             int j_top = (j + 1) % total_y_nodes;
 
             int right_node_index2 = grid_div.indexC(grid_div.gi(i_right), grid_div.gj(j));
             int top_node_index2 = grid_div.indexC(grid_div.gi(i), grid_div.gj(j_top));
 
-            // 2. Explicitly write out the curls to guarantee the correct physical signs
             bxf_derivative[current_node_index] = -(grid_div.Ez[top_node_index2] - grid_div.Ez[current_node_index]) / cell_height;
             byf_derivative[current_node_index] =  (grid_div.Ez[right_node_index2] - grid_div.Ez[current_node_index]) / cell_width;
 
