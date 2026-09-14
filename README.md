@@ -6,14 +6,14 @@
 ---
 ## Overview 
 ---
-A high-performance 2D compressible Magnetohydrodynamics (MHD) Simulator its engine implemented in C++ and visulised in python (decoupled). The solver models non-linear plasma interactions, shock dynamics and their evolution over time by coupling high-order finite volume spatial discretisations witha a divergence-free field constraint and a multi-stage IMEX time integrator.
+A high-performance 2D compressible Magnetohydrodynamics (MHD) Simulator with its engine implemented in C++ and visulised in python (decoupled). The solver models non-linear plasma interactions, shock dynamics and their evolution over time by coupling high-order finite volume spatial discretisations with a divergence-free field constraint and a multi-stage IMEX time integrator.
 
 
 ## Description
-- **High-Performance 2D Ideal/Compressible MHD Engine:** Built in C++ modelling plasma interactions and shock dynamics using Finite Volume Methods
+- **MHD Engine:** Built in C++ modelling plasma interactions and shock dynamics using Finite Volume Methods
 - **Divergence-Free Magnetic Field Propagation:** Utilises a staggered-grid Upwind-Constrained Transport methods (UCT) to ensure $\nabla \cdot B = 0$ down to machine precision
 - **High Order Shock Capturing:** 2nd-order MUSCL spatial reconstruction coupled with an HLL Riemann flux solver 
-- **IMEX Integrator Architecture:** Formulated an Implicit-Explicit Runge-Kutta staging structure (specifically the ARS-2,2,2 scheme) using sparse matrix linear solvers for parabolic diffusion terms
+- **IMEX Integrator:** Formulated an Implicit-Explicit Runge-Kutta staging structure (specifically the ARS-2,2,2 scheme) using sparse matrix linear solvers for parabolic diffusion terms
 
 ### Technical Architecture & Numerical Methods
 
