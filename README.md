@@ -1,6 +1,6 @@
 # Magnetohydrodynamics Simulator
 ---
-![Orszag Tang Benchmark Test]([[OrszagTang_512x512_grid.gif](https://drive.google.com/file/d/1JRRVIwQ6oTasTsldttGvs1g3OizconId/view?usp=sharing)](https://drive.google.com/file/d/1JRRVIwQ6oTasTsldttGvs1g3OizconId/view?usp=sharing))
+![Orszag Tang Benchmark Test](OrszagTang_512x512_grid_densityOnlyWithStreamlines.gif)
 ---
 
 ---
