@@ -1,11 +1,9 @@
 # Magnetohydrodynamics Simulator
 ---
 ![Orszag Tang Benchmark Test](OrszagTang_512x512_grid.gif)
----
 
----
 ## Overview 
----
+
 A high-performance 2D compressible Magnetohydrodynamics (MHD) Simulator with its engine implemented in C++ and visulised in python (decoupled). The solver models non-linear plasma interactions, shock dynamics and their evolution over time by coupling high-order finite volume spatial discretisations with a divergence-free field constraint and a multi-stage IMEX time integrator.
 
 
