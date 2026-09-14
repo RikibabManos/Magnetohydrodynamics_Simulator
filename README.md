@@ -1,6 +1,6 @@
 # Magnetohydrodynamics Simulator
 ---
-![Orszag Tang Benchmark Test](OrszagTang_512x512_grid_densityOnlyWithStreamlines.gif)
+![Orszag Tang Benchmark Test](OrszagTang_512x512_grid.gif)
 ---
 
 ---
@@ -19,7 +19,7 @@ A high-performance 2D compressible Magnetohydrodynamics (MHD) Simulator its engi
 
 | Component | Numerical Scheme / Architecture | Engineering Motivation |
 | :--- | :--- | :--- |
-| **Grid & Memory Layout** | Staggered Mesh (CT), Struct of Arrays (SoA) | Enforces face-centered magnetic flux while maximizing CPU cache locality for vectorisation. |
+| **Grid & Memory Layout** | Staggered Mesh (CT), Struct of Arrays (SoA) | Enforces face-centered magnetic flux while maximising CPU cache locality for vectorisation. |
 | **Spatial Reconstruction** | 2nd-Order TVD MUSCL (Minmod Limiter) | Prevents non-physical oscillations across steep gradients and shock fronts. |
 | **Riemann Flux Solver** | HLL Approximate Riemann Solver | Resolves non-linear intermediate wave states without expensive full-eigensystem solves. |
 | **Divergence Constraint** | Upwind Constrained Transport (UCT) | Preserves $\nabla \cdot \mathbf{B} = 0$ to machine precision, preventing non-physical magnetic monopoles. |
@@ -30,7 +30,7 @@ A high-performance 2D compressible Magnetohydrodynamics (MHD) Simulator its engi
 
 **Core Design Choices**
 
-* **Struct of Arrays (SoA) Layout:** Storing fields in contiguous 1D memory buffers (`rho`, `mx`, `my`, `bx`, `by`, `E`) instead of Arrays of Structures (AoS) ensures sequential memory access during spatial sweeps, enabling CPU auto-vectorization (SIMD).
+* **Struct of Arrays (SoA) Layout:** Storing fields in contiguous 1D memory buffers (`rho`, `mx`, `my`, `bx`, `by`, `E`) instead of Arrays of Structures (AoS) ensures sequential memory access during spatial sweeps, enabling CPU auto-vectorisation (SIMD).
 * **Shock Capturing & Solenoidal Protection:** Slope-limited MUSCL reconstruction paired with an HLL Riemann solver sharply resolves hydro-magnetic shocks. Corner-centred electric field evaluations ($E_z$) on a staggered grid guarantee that $\nabla \cdot \mathbf{B} = 0$ is preserved down to machine precision ($\sim 10^{-15}$).
 * **Stiff Operator Handling (IMEX Framework):** Isolates stiff parabolic magnetic diffusion ($\eta \nabla^2 \mathbf{B}$) into an implicit operator while updating hyperbolic advection terms explicitly via twin Butcher tableaus. The resulting linear system $(I - \gamma \Delta t \eta \mathbf{L})\mathbf{B}^{n+1} = \mathbf{B}^*$ is solved using Eigen’s sparse matrix modules.
 
@@ -46,11 +46,19 @@ The primary validation benchmark for 2D periodic Ideal Magnetohydrodynamics (MHD
 ---
 
 ### 2. Macroscopic Plasma Instabilities: Pinch & Buckling Modes
-Evaluates the solver's ability to model magnetostatic equilibria ($\nabla p = \mathbf{J} \times \mathbf{B}$), physical perturbations, and non-linear topological breakdowns in magnetized plasma columns.
+Evaluates the solver's ability to model magnetostatic equilibria ($\nabla p = \mathbf{J} \times \mathbf{B}$), physical perturbations, and non-linear topological breakdowns in magnetised plasma columns.
 
-* **Sausage Instability ($m=0$):** Seeded via localized radial perturbations; captures the magnetic pinch feedback loop ($B_\theta \propto 1/r$) where localized compression drives radial plasma evacuation until the core severs.
-* **Kink Instability ($m=1$):** Seeded via transverse displacement; models field-line bunching on the inner radius of a bend, driving runaway $S$-shaped helical buckling toward domain boundaries.
-* **Numerical Robustness:** Maintains stability and enforces $\nabla \cdot \mathbf{B} = 0$ during violent non-linear deformations and high-gradient plasma disruptions.
+#### 1. Sausage Instability ($m=0$) Compression Benchmark
+
+* **Initial Plasma Beta ($\beta$):** Low-beta regime ($p_0 = 0.1, B_0 = 5.0$) to enable strong magnetic confinement over thermal pressure.
+* **Core Compression Ratio:** **3.37×** increase in peak thermal pressure ($p_{\text{neck}}(1.5 $$\mathrm s$$ ) / p_{\text{neck}}(0) = 3.37$) at the narrowest neck constriction.
+* **Physical Verification:** Demonstrates dynamic magnetic pinching ($\mathbf{J} \times \mathbf{B}$), non-linear $P\,dV$ adiabatic compression, and symmetric magnetosonic wave radiation without numerical breakdown or negative pressure NaNs.
+
+
+
+#### 2. Kink Instability ($m=1$):
+*  Seeded via transverse displacement; models field-line bunching on the inner radius of a bend, driving runaway $S$-shaped helical buckling toward domain boundaries.
+
 
 ---
 
