@@ -2,16 +2,17 @@
 ---
 ![Orszag Tang Benchmark Test](OrszagTang_512x512_grid.gif)
 
+
 ## Overview 
 
-A high-performance 2D compressible Magnetohydrodynamics (MHD) Simulator with its engine implemented in C++ and visulised in python (decoupled). The solver models non-linear plasma interactions, shock dynamics and their evolution over time by coupling high-order finite volume spatial discretisations with a divergence-free field constraint and a multi-stage IMEX time integrator.
+A high-performance 2D compressible Magnetohydrodynamics (MHD) Simulator its engine implemented in C++ and visulised in python (decoupled). The solver models non-linear plasma interactions, shock dynamics and their evolution over time by coupling high-order finite volume spatial discretisations witha a divergence-free field constraint and a multi-stage IMEX time integrator.
 
 
 ## Description
-- **MHD Engine:** Built in C++ modelling plasma interactions and shock dynamics using Finite Volume Methods
+- **High-Performance 2D Ideal/Compressible MHD Engine:** Built in C++ modelling plasma interactions and shock dynamics using Finite Volume Methods
 - **Divergence-Free Magnetic Field Propagation:** Utilises a staggered-grid Upwind-Constrained Transport methods (UCT) to ensure $\nabla \cdot B = 0$ down to machine precision
 - **High Order Shock Capturing:** 2nd-order MUSCL spatial reconstruction coupled with an HLL Riemann flux solver 
-- **IMEX Integrator:** Formulated an Implicit-Explicit Runge-Kutta staging structure (specifically the ARS-2,2,2 scheme) using sparse matrix linear solvers for parabolic diffusion terms
+- **IMEX Integrator Architecture:** Formulated an Implicit-Explicit Runge-Kutta staging structure (specifically the ARS-2,2,2 scheme) using sparse matrix linear solvers for parabolic diffusion terms
 
 ### Technical Architecture & Numerical Methods
 
@@ -37,22 +38,21 @@ A high-performance 2D compressible Magnetohydrodynamics (MHD) Simulator with its
 ### 1. Canonical Shock-Capturing: 2D Orszag-Tang Vortex
 The primary validation benchmark for 2D periodic Ideal Magnetohydrodynamics (MHD). Used to verify multi-scale shock-vortex interactions, magnetic reconnection zones, and high-order symmetry preservation across a closed $2\pi \times 2\pi$ domain.
 
-* **Solenoidal Constraint:** Preserves solenoidal invariants down to machine precision ($\| \nabla \cdot \mathbf{B} \approx 10^{-12}) across full simulation runs via Staggered-Grid Upwind Constrained Transport (UCT).
-* **Spatial Symmetries:** Strictly preserves 180° point-reflection symmetry about the domain center $(\pi, \pi)$ and quadrant parity across $x=y$ and $x=-y$ diagonals throughout shock formation.
+* **Solenoidal Constraint:** Preserves solenoidal invariants down to machine precision ($\| \nabla \cdot \mathbf{B} \|_\infty \approx 10^{-12} \text{ to } 10^{-15}$) across full simulation runs via Staggered-Grid Upwind Constrained Transport (UCT).
+* **Spatial Symmetries:** Strictly preserves 180° point-reflection symmetry about the domain center $(\pi, \pi)$ and quadrant parity across $x=y$ and $x=-y$ diagonals throughout quadrupolar shock formation.
 * **Shock Capturing:** Resolves sharp supersonic density shocks and current sheets without generating non-physical oscillations or negative pressures.
 
 ---
 
 ### 2. Macroscopic Plasma Instabilities: Pinch & Buckling Modes
-Evaluates the solver's ability to model magnetostatic equilibria ($\nabla p = \mathbf{J} \times \mathbf{B}$), physical perturbations, and non-linear topological breakdowns in magnetised plasma columns.
+Evaluates the solver's ability to model non-linear topological breakdowns in magnetised plasma columns.
 
-#### 1. Sausage Instability ($m=0$) Compression Benchmark
+#### (i) Sausage Instability ($m=0$) Compression Benchmark
 
 * **Initial Plasma Beta ($\beta$):** Low-beta regime ($p_0 = 0.1, B_0 = 5.0$) to enable strong magnetic confinement over thermal pressure.
 * **Core Compression Ratio:** **3.37×** increase in peak thermal pressure ($p_{\text{neck}}(1.5 $$\mathrm s$$ ) / p_{\text{neck}}(0) = 3.37$) at the narrowest neck constriction.
-* **Physical Verification:** Demonstrates symmetric magnetosonic wave radiation without numerical breakdown or negative pressure NaNs.
 
-#### 2. Kink Instability ($m=1$):
+#### (ii) Kink Instability ($m=1$):
 *  Seeded via transverse displacement; models field-line bunching on the inner radius of a bend, driving runaway $S$-shaped helical buckling toward domain boundaries.
 
 

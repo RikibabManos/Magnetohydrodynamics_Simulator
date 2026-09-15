@@ -19,8 +19,6 @@ def deal_with_visual_float_point_errors(max, min):
 
     return max, min
 
-# make python read binary data file
-
 data_file_list = glob.glob(r"/home/true-sigma/GithubClones/Magnetohydrodynamics_Simulator/*.dat")
 data_file_list.sort()                                                    # sorts files alphabetically
 global_data_initial = np.fromfile(data_file_list[0], dtype = np.float64) # extract data from initial file to find header data and initial state
@@ -53,7 +51,7 @@ by_data = global_data_initial[total_node_count * 6: total_node_count * 7]
 for j in range(y_node_total):
     for i in range(x_node_total):
 
-        # Calculate inverted coordinates relative to domain center
+        # inverted coordinates relative to domain center
         inv_i = x_node_total - 1 - i
         inv_j = y_node_total - 1 - j
 
@@ -68,11 +66,11 @@ for j in range(y_node_total):
         bx_store  = bx_data[current_index]
         by_store  = by_data[current_index]
 
-        # Only process half the grid to avoid double-swapping
+        # prevent double-swapping
         if current_index >= inverted_index:
                 continue
 
-        # 1. Even Parity (Scalars: rho, E, p) -> f(r) = +f(-r)
+        # even parity f(r) = +f(-r)
         rho_data[current_index] -= rho_data[inverted_index]
         E_data[current_index]   -= E_data[inverted_index]
         p_data[current_index]   -= p_data[inverted_index]
@@ -81,7 +79,7 @@ for j in range(y_node_total):
         E_data[inverted_index]   -= E_store  
         p_data[inverted_index]   -= p_store  
 
-        # 2. Odd Parity (Vectors: vx, vy, bx, by) -> V(r) = -V(-r)
+        # odd parity V(r) = -V(-r)
         vx_data[current_index]  += vx_data[inverted_index]
         vy_data[current_index]  += vy_data[inverted_index]
         bx_data[current_index]  += bx_data[inverted_index]
@@ -269,12 +267,9 @@ def update(frame):
     current_bx_state = current_global_state[9 + total_node_count * 5: 6 * total_node_count + 9]
     current_by_state = current_global_state[9 + total_node_count * 6: 7 * total_node_count + 9]
 
-    # test for 180 degrees centre (pi, pi) inversion symmetry
-    # Assume domain is N_x by N_y without ghost cells in this indexing step
     for j in range(y_node_total):
         for i in range(x_node_total):
 
-            # Calculate inverted coordinates relative to domain center
             inv_i = x_node_total - 1 - i
             inv_j = y_node_total - 1 - j
 
@@ -289,11 +284,9 @@ def update(frame):
             bx_store  = current_bx_state[current_index]
             by_store  = current_by_state[current_index]
 
-            # Only process half the grid to avoid double-swapping
             if current_index >= inverted_index:
                 continue
 
-            # 1. Even Parity (Scalars: rho, E, p) -> f(r) = +f(-r)
             current_rho_state[current_index] -= current_rho_state[inverted_index]
             current_E_state[current_index]   -= current_E_state[inverted_index]
             current_p_state[current_index]   -= current_p_state[inverted_index]
@@ -302,7 +295,6 @@ def update(frame):
             current_E_state[inverted_index]   -= E_store  
             current_p_state[inverted_index]   -= p_store  
 
-            # 2. Odd Parity (Vectors: vx, vy, bx, by) -> V(r) = -V(-r)
             current_vx_state[current_index]  += current_vx_state[inverted_index]
             current_vy_state[current_index]  += current_vy_state[inverted_index]
             current_bx_state[current_index]  += current_bx_state[inverted_index]
@@ -321,7 +313,6 @@ def update(frame):
     current_bx_2D = current_bx_state.reshape(y_node_total, x_node_total)
     current_by_2D = current_by_state.reshape(y_node_total, x_node_total)
 
-    # removing ghost cells
     current_rho_2D = current_rho_2D[ghost_cell_count: -ghost_cell_count, ghost_cell_count: -ghost_cell_count]
     current_E_2D   = current_E_2D[ghost_cell_count: -ghost_cell_count, ghost_cell_count: -ghost_cell_count]
     current_p_2D   = current_p_2D[ghost_cell_count: -ghost_cell_count, ghost_cell_count: -ghost_cell_count]
