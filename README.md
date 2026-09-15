@@ -5,14 +5,14 @@
 
 ## Overview 
 
-A high-performance 2D compressible Magnetohydrodynamics (MHD) Simulator its engine implemented in C++ and visulised in python (decoupled). The solver models non-linear plasma interactions, shock dynamics and their evolution over time by coupling high-order finite volume spatial discretisations witha a divergence-free field constraint and a multi-stage IMEX time integrator.
+A high-performance, compressible, resistive 2D Magnetohydrodynamics (MHD) Simulator. Its engine has been implemented in C++ and visualised in python (decoupled). The solver models non-linear plasma interactions, shock dynamics and their evolution over time by coupling high-order finite volume spatial discretisations with a divergence-free field constraint as well as a multi-stage IMEX time integrator.
 
 
 ## Description
-- **High-Performance 2D Ideal/Compressible MHD Engine:** Built in C++ modelling plasma interactions and shock dynamics using Finite Volume Methods
-- **Divergence-Free Magnetic Field Propagation:** Utilises a staggered-grid Upwind-Constrained Transport methods (UCT) to ensure $\nabla \cdot B = 0$ down to machine precision
+- **MHD Engine:** Built in C++ modelling plasma interactions and shock dynamics using Finite Volume Methods. Is able to model Ideal or Resistive, as well as Compressible or Incompressible, Magnetohydrodynamics or pure Hydrodynamics based off initial settings.
+- **Divergence-Free Magnetic Field Propagation:** Utilises staggered-grid Upwind-Constrained Transport methods (UCT) to ensure $\nabla \cdot B = 0$ down to machine precision
 - **High Order Shock Capturing:** 2nd-order MUSCL spatial reconstruction coupled with an HLL Riemann flux solver 
-- **IMEX Integrator Architecture:** Formulated an Implicit-Explicit Runge-Kutta staging structure (specifically the ARS-2,2,2 scheme) using sparse matrix linear solvers for parabolic diffusion terms
+- **IMEX Integrator Architecture:** Formulated an Implicit-Explicit Runge-Kutta staging structure (specifically the ARS-2,2,2 scheme) using sparse matrix linear solvers for parabolic diffusion terms (from the Eigen Linear Algebra C++ Library)
 
 ### Technical Architecture & Numerical Methods
 
@@ -29,9 +29,10 @@ A high-performance 2D compressible Magnetohydrodynamics (MHD) Simulator its engi
 
 **Core Design Choices**
 
-* **Struct of Arrays (SoA) Layout:** Storing fields in contiguous 1D memory buffers (`rho`, `mx`, `my`, `bx`, `by`, `E`) instead of Arrays of Structures (AoS) ensures sequential memory access during spatial sweeps, enabling CPU auto-vectorisation (SIMD).
-* **Shock Capturing & Solenoidal Protection:** Slope-limited MUSCL reconstruction paired with an HLL Riemann solver sharply resolves hydro-magnetic shocks. Corner-centred electric field evaluations ($E_z$) on a staggered grid guarantee that $\nabla \cdot \mathbf{B} = 0$ is preserved down to machine precision ($\sim 10^{-15}$).
-* **Stiff Operator Handling (IMEX Framework):** Isolates stiff parabolic magnetic diffusion ($\eta \nabla^2 \mathbf{B}$) into an implicit operator while updating hyperbolic advection terms explicitly via twin Butcher tableaus. The resulting linear system $(I - \gamma \Delta t \eta \mathbf{L})\mathbf{B}^{n+1} = \mathbf{B}^*$ is solved using Eigen’s sparse matrix modules.
+- **Struct of Arrays (SoA) Layout:** Storing fields in contiguous 1D memory buffers (`rho`, `mx`, `my`, `bx`, `by`, `E`) instead of Arrays of Structures (AoS) ensures sequential memory access during spatial sweeps, enabling CPU auto-vectorisation (SIMD).
+- **Memory Pre-allocation** All primary workspace vector memory pre-allocated on heap on initialisation, eliminating significant memory management during integrator stepping.
+- **Shock Capturing & Solenoidal Protection:** Slope-limited MUSCL reconstruction paired with an HLL Riemann solver sharply resolves hydromagnetic shocks. Corner-centred electric field evaluations ($E_z$) on a staggered grid guarantee that $\nabla \cdot \mathbf{B} = 0$ is preserved down to ($\sim 10^{-12}$).
+- **Stiff Operator Handling (IMEX Framework):** Isolates stiff parabolic magnetic diffusion ($\eta \nabla^2 \mathbf{B}$) into an implicit operator while updating hyperbolic advection terms explicitly via twin Butcher tableaus. The resulting linear system $(I - \gamma \Delta t \eta \mathbf{L})\mathbf{B}^{n+1} = \mathbf{B}^*$ is solved using Eigen’s sparse matrix modules. This balances code complexity and efficiency, less rapidly changing non-stiff terms deal with by required explicit framework, with only stiff terms necessitating implicit framework utilising it.
 
 ## Validation & Physics Benchmarks
 
@@ -47,14 +48,15 @@ The primary validation benchmark for 2D periodic Ideal Magnetohydrodynamics (MHD
 ### 2. Macroscopic Plasma Instabilities: Pinch & Buckling Modes
 Evaluates the solver's ability to model non-linear topological breakdowns in magnetised plasma columns.
 
-#### (i) Sausage Instability ($m=0$) Compression Benchmark
+#### (i) Sausage Instability ($m=0$):
 
-* **Initial Plasma Beta ($\beta$):** Low-beta regime ($p_0 = 0.1, B_0 = 5.0$) to enable strong magnetic confinement over thermal pressure.
-* **Core Compression Ratio:** **3.37×** increase in peak thermal pressure ($p_{\text{neck}}(1.5 $$\mathrm s$$ ) / p_{\text{neck}}(0) = 3.37$) at the narrowest neck constriction.
+- **Setup & Physics:** Initialised with an axial magnetic field profile $B_y(r)$ and a periodic spatial perturbation along the core. Captures the localised $B_\theta \propto 1/r$ magnetic pinch feedback loop, modelling symmetric non-linear necking and magneto-sonic wave emission into the ambient sheath.
+- **Initial Plasma Beta ($\beta$):** Low-beta regime ($p_0 = 0.1, B_0 = 5.0$) to enable strong magnetic confinement over thermal pressure.
+- **Core Compression Ratio:** **3.37×** increase in peak thermal pressure ($p_{\text{neck}}(1.5 $$\mathrm s$$ ) / p_{\text{neck}}(0) = 3.37$) at the narrowest neck constriction.
 
 #### (ii) Kink Instability ($m=1$):
-*  Seeded via transverse displacement; models field-line bunching on the inner radius of a bend, driving runaway $S$-shaped helical buckling toward domain boundaries.
-
+-  **Setup & Physics:** Seeded via transverse displacement. Models field-line bunching on the inner radius of a bend, driving runaway $S$-shaped helical buckling toward domain boundaries.
+- **Numerical Robustness:** Confirms that the staggered-grid Upwind Constrained Transport (UCT) scheme maintains solenoidal field invariants during violent, high-gradient topological deformations
 
 ---
 
