@@ -235,8 +235,11 @@ divergence_checker_values calculate_current_div_B(Grid& grid_test) { // function
     double max_divergence_norm = 0.0;
     double root_mean_square_norm_divergence = 0.0;
 
-    for (int j = 0; j < grid_test.ny; j++) {
-        for (int i = 0; i < grid_test.nx; i++) {
+    int j_final = grid_test.ny;
+    int i_final = grid_test.nx;
+
+    for (int j = 0; j < j_final; j++) {
+        for (int i = 0; i < i_final; i++) {
 
             int current_physical_index = grid_test.indexC(grid_test.gi(i), grid_test.gj(j));
             int right_physical_index = grid_test.indexC(grid_test.gi(i + 1), grid_test.gj(j));
@@ -253,15 +256,17 @@ divergence_checker_values calculate_current_div_B(Grid& grid_test) { // function
         }
     }
     
-    root_mean_square_norm_divergence = sqrt(root_mean_square_norm_divergence / (grid_test.nx * grid_test.ny));
+    root_mean_square_norm_divergence = sqrt(root_mean_square_norm_divergence / (i_final * j_final));
     return {root_mean_square_norm_divergence, max_divergence_norm};
 
 }
 
 void resistive_B_term(Grid& grid_state, std::vector<double>& bx_rate, std::vector<double>& by_rate, Eigen::ConjugateGradient<Eigen::SparseMatrix<double>, Eigen::Lower|Eigen::Upper>& solver, integrator_reserved_memory& workspace, bool solve_implicitly) { // this function deals with the sole 'stiff' resistive magnetic term, with the option to calculate its value both explicitly and implicitly 
     
-    for (int j = 0; j < grid_state.ny; j++) {
-        for (int i = 0; i < grid_state.nx; i++) {
+    int physical_y_node_count = grid_state.ny;
+    int physical_x_node_count = grid_state.nx;
+    for (int j = 0; j < physical_y_node_count; j++) {
+        for (int i = 0; i < physical_x_node_count; i++) {
 
             int current_index = grid_state.indexC(grid_state.gi(i), grid_state.gj(j));
             int left_index = grid_state.indexC(grid_state.gi(i - 1), grid_state.gj(j));
@@ -270,7 +275,7 @@ void resistive_B_term(Grid& grid_state, std::vector<double>& bx_rate, std::vecto
             double dBy_dx = (grid_state.byf[current_index] - grid_state.byf[left_index]) / grid_state.cell_width;
             double dBx_dy = (grid_state.bxf[current_index] - grid_state.bxf[bottom_index]) / grid_state.cell_height;
             
-            workspace.Ez_corner_no_padding[j * grid_state.nx + i] = grid_state.resistivity * (dBy_dx - dBx_dy);
+            workspace.Ez_corner_no_padding[j * physical_x_node_count + i] = grid_state.resistivity * (dBy_dx - dBx_dy);
         }
     }
 
@@ -281,14 +286,15 @@ void resistive_B_term(Grid& grid_state, std::vector<double>& bx_rate, std::vecto
     if (solve_implicitly) {Ez_field = solver.solve(Ez_rhs);} 
     else {Ez_field = Ez_rhs;}
 
-    for (int j = 0; j < grid_state.ny; j++) {
-        for (int i = 0; i < grid_state.nx; i++) {
-            int i_right = (i + 1) % grid_state.nx;
-            int j_top = (j + 1) % grid_state.ny;
+    for (int j = 0; j < physical_y_node_count; j++) {
+        for (int i = 0; i < physical_x_node_count; i++) {
+            
+            int i_right = (i + 1) % physical_x_node_count;
+            int j_top = (j + 1) % physical_y_node_count;
 
-            double Ez_current = Ez_field[j * grid_state.nx + i];
-            double Ez_top     = Ez_field[j_top * grid_state.nx + i];
-            double Ez_right   = Ez_field[j * grid_state.nx + i_right];
+            double Ez_current = Ez_field[j * physical_x_node_count + i];
+            double Ez_top     = Ez_field[j_top * physical_x_node_count + i];
+            double Ez_right   = Ez_field[j * physical_x_node_count + i_right];
 
             int grid_index = grid_state.indexC(grid_state.gi(i), grid_state.gj(j));
 
@@ -706,13 +712,14 @@ void acoustic_wave_test_initial_values(Grid& grid_ac) {
 void sausage_instability_initial_conditions(Grid& global_state) {
 
     const double adiabatic_index = 5.0 / 3.0; 
-    const double background_B = 1.0;              
+    const double background_B = 5.0;              
     const double background_rho = 1.0;            
-    const double background_p = 1.0;              
+    const double background_p = 0.1;              
     constexpr double pi = 3.14159265359;
+    double domain_height = global_state.nyt * global_state.cell_height;
 
     const double pertubation_amplitude = 0.15;    
-    const double pertubation_wavenumber = 2.0 * pi;    
+    const double pertubation_wavenumber = 2.0 * pi / domain_height;    
     const double radius_sq = 0.04;  // plasma pinch channel radius squared
 
     double x_mid = 0.5 * global_state.nxt * global_state.cell_width;
@@ -729,11 +736,13 @@ void sausage_instability_initial_conditions(Grid& global_state) {
             double r_dist = x_position - x_mid;
 
             // m=0 perturbation modulation along the channel axis (y-direction)
-            double perturbation = 1.0 + pertubation_amplitude * std::cos(pertubation_wavenumber * y_position);
+            double perturbation = 1.0 - pertubation_amplitude * std::cos(pertubation_wavenumber * y_position);
 
             // background floor of 0.001 to prevent 0/0 division
-            double rho = background_rho * std::exp(-(r_dist * r_dist) / (radius_sq * perturbation)) + 0.001;
-            double p   = background_p   * std::exp(-(r_dist * r_dist) / (radius_sq * perturbation)) + 0.001;
+            double rho = background_rho * std::exp(-(r_dist * r_dist) / (radius_sq * perturbation)) + 0.1;
+            double p   = background_p   * std::exp(-(r_dist * r_dist) / (radius_sq * perturbation)) + 0.1;
+            rho= std::max(rho, 1e-4);
+            p = std::max(p, 1e-4);
             double vx  = 0.0;
             double vy  = 0.0;
             double bx  = 0.0;
@@ -781,8 +790,10 @@ void kink_instability_initial_conditions(Grid& global_state) {
             double r_dist = x_position - x_mid;
 
             double envelope = std::exp(-(r_dist * r_dist) / radius_sq);
-            double rho = background_rho * envelope + 0.001; 
-            double p   = background_p   * envelope + 0.001;
+            double rho = background_rho * envelope + 0.1; 
+            double p   = background_p   * envelope + 0.1;
+            rho= std::max(rho, 1e-4);
+            p = std::max(p, 1e-4);
 
             // m=1 transverse velocity seed to trigger column displacement/buckling
             double vx = velocity_pertubation_amplitude * std::sin(sinusoidal_wavenumber * y_position) * envelope;
@@ -802,6 +813,7 @@ void kink_instability_initial_conditions(Grid& global_state) {
             global_state.p[idx]  = p;
             global_state.vx[idx] = vx;
             global_state.vy[idx] = vy;
+
         }
     }
 }
@@ -811,11 +823,11 @@ int main(){
     auto start_time = std::chrono::high_resolution_clock::now();
 
     // create initial global state
-    double animation_duration = 4.0;   // seconds
-    const double time_interval = 0.0002;  // seconds
-    int snapshot_frequency = 100;
-    int x_node_count = 512;
-    int y_node_count = 512;
+    double animation_duration = 10.0;   // seconds
+    const double time_interval = 0.004;  // seconds
+    int snapshot_frequency = 10;
+    int x_node_count = 200;
+    int y_node_count = 200;
     int ghost_node_count = 2;
     
     Grid global_state(x_node_count, y_node_count, ghost_node_count);   
@@ -845,9 +857,9 @@ int main(){
     // --- CHOOSE WHICH TEST TO RUN HERE ---
     // -------------------------------------
 
-    orszag_tang_initial_conditions(global_state, memory_storage);
+    //orszag_tang_initial_conditions(global_state, memory_storage);
     //sausage_instability_initial_conditions(global_state);
-    //kink_instability_initial_conditions(global_state);
+    kink_instability_initial_conditions(global_state);
     //magnetic_wave_test_initial_values(global_state);
     //gaussian_density_pulse_test_initial_values(global_state);
     //acoustic_wave_test_initial_values(global_state);
