@@ -1,1 +1,0 @@
-# Magnetohydrodynamics_Simulator
