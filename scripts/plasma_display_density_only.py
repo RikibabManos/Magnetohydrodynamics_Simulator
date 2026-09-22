@@ -8,11 +8,10 @@ from display_functions import prepare_snapshot_data, get_global_extrema
 
 script_dir = Path(__file__).parent
 output_dir = script_dir.parent / "build/output" 
-data_file_list = glob.glob("/home/true-sigma/GithubClones/Magnetohydrodynamics_Simulator/testData/OrszagTang_512x512_grid/snapshot_*.dat")
-data_file_list.sort()                                                    # sorts files alphabetically
+data_file_list = glob.glob(str(output_dir / "snapshot_*.dat"))
+data_file_list.sort()                    
 global_data_initial = np.fromfile(data_file_list[0], dtype = np.float64) # extract data from initial file to find header data and initial state
 
-# extracting headers
 x_node_count = int(global_data_initial[0])
 y_node_count = int(global_data_initial[1])
 ghost_cell_count = int(global_data_initial[2])
@@ -40,7 +39,6 @@ if x_node_count == y_node_count:
 else:
     print("ERROR: X and Y node counts differ")
 
-# setup animation initial frame
 fig = plt.figure(figsize = (12, 6))
 gs = gridspec.GridSpec(2, 2, height_ratios = [0.1, 1], wspace = 0.3, hspace = 0.5)
 plt.subplots_adjust(top = 0.9, bottom = 0.08, left = 0.05, right = 0.95)
@@ -72,7 +70,6 @@ ax_rho.set_ylim(0, y_node_count * cell_height)
  
 fig.colorbar(rho_heatmap, ax = ax_rho, label = 'Density')
 
-# synchronized initial lists
 time_history = []
 div_B_rms = []
 div_B_max = []
