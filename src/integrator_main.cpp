@@ -24,7 +24,7 @@ int main() {
     // --- MAIN TWEAKABLE PROPERTIES ---
     const double animation_duration = 3.0; // seconds
     const double time_interval_override = 0.0; // seconds, make this != 0.0 if you would like to specify a specific, constant time-step, otherwise when 0.0 the code will utilise a dynamic time step
-    const double resistivity = 10.0; // units: grid_length^2 * seconds^-1. note that the speed of the code will significantly decrease if resitivity is non-zero AND time step is variable
+    const double resistivity = 0.0; // units: grid_length^2 * seconds^-1. note that the speed of the code will significantly decrease if resitivity is non-zero AND time step is variable
     const int snapshot_frequency = 200; // the code will only write binary file data every 'snapshot_frequency' iterations, smaller values lead to a higher resolution, but use more memory (more .dat files)
     const int x_node_count = 200; // 200x200 grid size is a good balance between grid resolution and short run time, you  can change if you wish
     const int y_node_count = 200;
