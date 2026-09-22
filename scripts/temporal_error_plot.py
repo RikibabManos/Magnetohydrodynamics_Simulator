@@ -116,5 +116,14 @@ plt.loglog(line_bf_x, line_bf_y, 'b--', label = fit_label)
 plt.grid(True, which = "both", linestyle = ":", alpha = 0.7)
 plt.tight_layout()
 plt.legend()
-plt.savefig("temporal_error_plot.png")
+
+plt.savefig(
+    'temporal_error_plot.png',
+    dpi = 300,                  
+    bbox_inches = 'tight',      
+    pad_inches = 0.05,          
+    transparent = False,        
+    facecolor = 'white'
+)
+
 plt.show()
