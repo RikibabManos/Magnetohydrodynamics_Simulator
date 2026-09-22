@@ -109,7 +109,7 @@ fig = plt.figure(figsize = (10, 6))
 ax = fig.add_subplot()
 ax.set_title("Log-Log Plot of Temporal RMS Error in $B_y$ for a Decaying Magnetic Sine Wave")
 ax.set_ylabel("Temporal RMS Error / dimensionless")
-ax.set_xlabel("timestep / s")
+ax.set_xlabel("Timestep / s")
 fit_label = f'Line of Best Fit: $E = {intercept:.2f} \cdot (\Delta t)^{{{slope:.2f}}}$ (Slope $p = {slope:.5f}$)'
 plt.loglog(timestep_data, error_data, 'ro', markersize = 4)
 plt.loglog(line_bf_x, line_bf_y, 'b--', label = fit_label)
