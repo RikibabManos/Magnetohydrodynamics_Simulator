@@ -3,9 +3,12 @@ import numpy as np
 import matplotlib.animation as animation
 import matplotlib.gridspec as gridspec
 import glob
-from display_functions import prepare_snapshot_data
+from pathlib import Path
+from display_functions import prepare_snapshot_data, get_global_extrema
 
-data_file_list = glob.glob(r"/home/true-sigma/GithubClones/Magnetohydrodynamics_Simulator/testData/OrszagTang_512x512_grid/*.dat")
+script_dir = Path(__file__).parent
+output_dir = script_dir.parent / "build/output" 
+data_file_list = glob.glob("/home/true-sigma/GithubClones/Magnetohydrodynamics_Simulator/testData/OrszagTang_512x512_grid/snapshot_*.dat")
 data_file_list.sort()                                                    # sorts files alphabetically
 global_data_initial = np.fromfile(data_file_list[0], dtype = np.float64) # extract data from initial file to find header data and initial state
 
@@ -24,7 +27,8 @@ time_between_frames = global_data_initial[6]
 root_mean_square_divergence_B = global_data_initial[7]
 max_norm_divergence_B = global_data_initial[8]
 
-mhd_properties, initial_extrema = prepare_snapshot_data(global_data_initial, shape_data)
+mhd_properties = prepare_snapshot_data(global_data_initial, shape_data)
+global_extrema = get_global_extrema(data_file_list, shape_data)
 
 # define coordinates on 2D grid for streamlines
 if x_node_count == y_node_count:
@@ -57,8 +61,8 @@ rho_heatmap = ax_rho.imshow(
     mhd_properties["rho_2D"],
     cmap = 'inferno',
     origin = 'lower',
-    vmin = initial_extrema["rho"][1],
-    vmax = initial_extrema["rho"][0],
+    vmin = global_extrema["rho"][1],
+    vmax = global_extrema["rho"][0],
     extent = (0, x_node_count * cell_width, 0, y_node_count * cell_height),
     interpolation = 'bilinear'
 )
@@ -152,7 +156,7 @@ def init():
     div_B_rms_line.set_data([], [])
     div_B_max_line.set_data([], [])
     
-    return (div_B_max_line, div_B_rms_line, rho_heatmap, )
+    return (div_B_rms_line, div_B_max_line, rho_heatmap, magnetic_streamlines_overlayer, magnetic_streamlines_underlayer, )
 
 def update(frame):
 
@@ -176,7 +180,7 @@ def update(frame):
     div_B_rms_line.set_data(time_history, div_B_rms)
     div_B_max_line.set_data(time_history, div_B_max)
     
-    update_mhd_properties, _ = prepare_snapshot_data(current_global_state, shape_data)
+    update_mhd_properties = prepare_snapshot_data(current_global_state, shape_data)
     
     rho_heatmap.set_array(update_mhd_properties["rho_2D"])
     ax_rho.set_title("Density with B Field streamlines")
@@ -228,7 +232,7 @@ ani = animation.FuncAnimation(
 )
 
 #ani.save(
-#    "placeholder1.gif",
+#    "placeholder.gif",
 #    writer = "pillow",
 #    fps  = 1000,
 #    dpi = 100

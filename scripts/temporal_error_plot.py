@@ -1,6 +1,7 @@
 import matplotlib.pyplot as plt
 import numpy as np
 import glob
+from pathlib import Path
 from display_functions import prepare_snapshot_data
 
 def exact_function(x_coordinate, y_coordinate, physical_grid_width, physical_grid_height, current_time):
@@ -70,7 +71,7 @@ for folder in directories:
             chosen_actual_time = t_frame
 
     current_timestep_data = np.fromfile(best_file, dtype = np.float64)
-    current_properties_data = prepare_snapshot_data(current_timestep_data, shape_data)
+    current_properties_data, _ = prepare_snapshot_data(current_timestep_data, shape_data)
     current_by_data = current_properties_data["by_2D"]
 
     # generate the exact By field matrix
@@ -80,7 +81,7 @@ for folder in directories:
     exact_by_matrix = exact_function(X, Y, grid_width, grid_height, target_sim_time)
 
     current_error = np.sqrt(np.mean((exact_by_matrix - current_by_data) ** 2)) # root mean square error
-    spatial_floor = 1.39e-4 # baseline spatial error floor for 200x200 grid, we only want to see the time dependace of the error!
+    spatial_floor = 1.39e-4 # baseline spatial error floor for 200x200 grid, we only want to see the time dependace of the error! Note that this is dependant on grid size, so you must manually alter this to the value at which the plot flattens out (should look like an positive exponential curve with 0 scaling), or scale by the value of your smallest error (this will replicate the O(t^2) behaviour but with scaled errors) 
     temporal_error_data = current_error - spatial_floor
 
     error_data.append(temporal_error_data)
@@ -101,11 +102,14 @@ line_bf_y = 10 ** y_data_log
 
 fig = plt.figure(figsize = (10, 6))
 ax = fig.add_subplot()
-ax.set_title("Log(error) against Log(timestep) for decaying magnetic sine wave")
+ax.set_title("Log-Log Plot of Temporal RMS Error in $B_y$ for a Decaying Magnetic Sine Wave")
+ax.set_ylabel("Temporal RMS Error / dimensionless")
+ax.set_xlabel("timestep / s")
 fit_label = f'Line of Best Fit: $E = {intercept:.2f} \cdot (\Delta t)^{{{slope:.2f}}}$ (Slope $p = {slope:.5f}$)'
 plt.loglog(timestep_data, error_data, 'ro', markersize = 4)
 plt.loglog(line_bf_x, line_bf_y, 'b--', label = fit_label)
 plt.grid(True, which = "both", linestyle = ":", alpha = 0.7)
 plt.tight_layout()
 plt.legend()
+plt.savefig("temporal_error_plot.png")
 plt.show()

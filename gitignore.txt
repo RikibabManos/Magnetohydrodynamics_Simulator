@@ -1,0 +1,7 @@
+build/
+output/
+testData/
+*.exe
+*.out
+*.dat
+*.gif

@@ -1,6 +1,6 @@
 # Magnetohydrodynamics Simulator
 
-![Orszag Tang Benchmark Test](OrszagTang_512x512_grid_densityOnlyWithStreamlines.gif)
+![Orszag Tang Benchmark Test](gif/OrszagTang_512x512_grid_densityOnlyWithStreamlines.gif)
 
 ## Overview
 
@@ -60,6 +60,7 @@ Evaluates the solver's ability to model non-linear topological breakdowns in mag
 - **Setup & Physics:** Seeded via transverse displacement. Models field-line bunching on the inner radius of a bend, driving runaway $S$-shaped helical buckling toward domain boundaries.
 - **Numerical Robustness:** Confirms that the staggered-grid Upwind Constrained Transport (UCT) scheme maintains solenoidal field invariants during violent, high-gradient topological deformations
 
+![Kink Instability Test](gif/kink_instability_200x200_grid.gif)
 ---
 
 ### 3. Diffusion & Operator Convergence: Decaying Magnetic Sine Wave
@@ -73,10 +74,17 @@ Verifies the accuracy and convergence order of the implicit Runge-Kutta staging 
 ## Bulid
 
 ```bash
-git clone https://github.com/RikibabManos/mhd-simulator.git
-cd mhd-simulator
-mkdir build && cd build
+# C++ build
+mkdir build
+cd build
 cmake .. -DCMAKE_BUILD_TYPE=Release
-make -j4
+cmake --build . --config Release
 
+./mhd_sim             # On Linux / macOS
+# OR
+.\Release\mhd_sim.exe # On Windows (MSVC)
+
+# python build
+cd ..
+python scripts/visualize.py
 ```

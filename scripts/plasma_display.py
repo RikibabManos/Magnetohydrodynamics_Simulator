@@ -3,9 +3,13 @@ import numpy as np
 import matplotlib.animation as animation
 import matplotlib.gridspec as gridspec
 import glob
-from display_functions import prepare_snapshot_data
+from pathlib import Path
+from display_functions import prepare_snapshot_data, get_global_extrema
 
-data_file_list = glob.glob(r"/home/true-sigma/GithubClones/Magnetohydrodynamics_Simulator/testData/sausageInstability_512x512_grid_lowBetaRegime/*.dat")
+script_dir = Path(__file__).parent
+output_dir = script_dir.parent #/ "build/output" 
+data_file_list = glob.glob("/home/true-sigma/GithubClones/Magnetohydrodynamics_Simulator/snapshot_*.dat")
+#print(data_file_list)
 data_file_list.sort()
 global_data_initial = np.fromfile(data_file_list[0], dtype = np.float64) # extract data from initial file to find header data and initial state
 
@@ -25,6 +29,7 @@ root_mean_square_divergence_B = global_data_initial[7]
 max_norm_divergence_B = global_data_initial[8]
 
 ## --- testing for core compression of sausage instability ---
+# note that a compression ratio > 1 is unlikely outside of low beta regime
 #p_frame0 = np.fromfile("/home/true-sigma/GithubClones/Magnetohydrodynamics_Simulator/testData/sausageInstability_512x512_grid_lowBetaRegime/snapshot_00000.dat", dtype=np.float64)[9 + total_node_count * 2: 9 + total_node_count * 3].reshape((y_node_total, x_node_total))
 #p_frameT = np.fromfile("/home/true-sigma/GithubClones/Magnetohydrodynamics_Simulator/testData/sausageInstability_512x512_grid_lowBetaRegime/snapshot_00040.dat", dtype=np.float64)[9 + total_node_count * 2: 9 + total_node_count * 3].reshape((y_node_total, x_node_total))
 #
@@ -38,10 +43,10 @@ max_norm_divergence_B = global_data_initial[8]
 #
 ##print(f"p_neck(0): {p_line_0[max_compression]:.5f}")
 ##print(f"p_neck(t): {p_line_t[max_compression]:.5f}")
-#compression_time = 30 * int(frame_rate) * time_between_frames
+#compression_time = int(frame_rate) * time_between_frames * 40 # the integer number must be manually changed to mirror the second frame measured
 #print(f"Compression Ratio: {p_line_t[max_compression] / p_line_0[max_compression]:.2f}x, at t = {compression_time}s")
 
-mhd_properties, initial_extrema = prepare_snapshot_data(global_data_initial, shape_data)
+mhd_properties = prepare_snapshot_data(global_data_initial, shape_data)
 
 # setup animation initial frame
 fig = plt.figure(figsize = (18, 9))
@@ -60,11 +65,13 @@ ax_vy = fig.add_subplot(gs[2, 2])
 ax_bx = fig.add_subplot(gs[1, 3])
 ax_by = fig.add_subplot(gs[2, 3])
 
+global_extrema = get_global_extrema(data_file_list, shape_data)
+
 div_B_rms = [root_mean_square_divergence_B]
 div_B_max = [max_norm_divergence_B]
 div_B_rms_line, = ax_div_B.plot([], [], color = 'red', label = 'RMS Divergence of B')
 div_B_max_line, = ax_div_B.plot([], [], color = 'blue', label = 'Max absolute Divergence of B')
-p_max_history = [initial_extrema["p"][0]]
+p_max_history = [global_extrema["p"][0]]
 time_history = [0]
 ax_div_B.legend()
 
@@ -72,8 +79,8 @@ rho_heatmap = ax_rho.imshow(
     mhd_properties["rho_2D"],
     cmap = 'magma',
     origin = 'lower',
-    vmin = initial_extrema["rho"][1],
-    vmax = initial_extrema["rho"][0],
+    vmin = global_extrema["rho"][1],
+    vmax = global_extrema["rho"][0],
     extent = (0, x_node_count, 0, y_node_count),
     interpolation = 'nearest'
 )
@@ -82,8 +89,8 @@ E_heatmap = ax_E.imshow(
     mhd_properties["E_2D"],
     cmap = 'cividis',
     origin = 'lower',
-    vmin = initial_extrema["E"][1],
-    vmax = initial_extrema["E"][0],
+    vmin = global_extrema["E"][1],
+    vmax = global_extrema["E"][0],
     extent = (0, x_node_count, 0, y_node_count),
     interpolation = 'nearest'
 )
@@ -92,8 +99,8 @@ p_heatmap = ax_p.imshow(
     mhd_properties["p_2D"],
     cmap = 'plasma',
     origin = 'lower',
-    vmin = initial_extrema["p"][1],
-    vmax = initial_extrema["p"][0],
+    vmin = global_extrema["p"][1],
+    vmax = global_extrema["p"][0],
     extent = (0, x_node_count, 0, y_node_count),
     interpolation = 'nearest'
 )
@@ -102,8 +109,8 @@ vx_heatmap = ax_vx.imshow(
     mhd_properties["vx_2D"],
     cmap = 'magma',
     origin = 'lower',
-    vmin = initial_extrema["vx"][1],
-    vmax = initial_extrema["vy"][0],
+    vmin = global_extrema["vx"][1],
+    vmax = global_extrema["vy"][0],
     extent = (0, x_node_count, 0, y_node_count),
     interpolation = 'nearest'
 )
@@ -112,8 +119,8 @@ vy_heatmap = ax_vy.imshow(
     mhd_properties["vy_2D"],
     cmap = 'magma',
     origin = 'lower', 
-    vmin = initial_extrema["vy"][1],
-    vmax = initial_extrema["vy"][0],
+    vmin = global_extrema["vy"][1],
+    vmax = global_extrema["vy"][0],
     extent = (0, x_node_count, 0, y_node_count),
     interpolation = 'nearest'
 )
@@ -122,8 +129,8 @@ bx_heatmap = ax_bx.imshow(
     mhd_properties["bx_2D"],
     cmap = 'RdBu_r',
     origin = 'lower',
-    vmin = initial_extrema["bx"][1],
-    vmax = initial_extrema["bx"][0],
+    vmin = global_extrema["bx"][1],
+    vmax = global_extrema["bx"][0],
     extent = (0, x_node_count, 0, y_node_count),
     interpolation = 'nearest'
 )
@@ -132,8 +139,8 @@ by_heatmap = ax_by.imshow(
     mhd_properties["by_2D"],
     cmap = 'coolwarm',
     origin = 'lower',
-    vmin = initial_extrema["by"][1],
-    vmax = initial_extrema["by"][0],
+    vmin = global_extrema["by"][1],
+    vmax = global_extrema["by"][0],
     extent = (0, x_node_count, 0, y_node_count),
     interpolation = 'nearest'
 )
@@ -182,8 +189,9 @@ ax_div_B.set_xlim(0, total_sim_time)
 greatest_div_B = np.fromfile(data_file_list[-1], dtype = np.float64)[8] * 1.2
 ax_div_B.set_ylim(0, max(greatest_div_B, 1e-15))
 
-ax_div_B.set_ylabel("Divergence of B")
-ax_div_B.set_xlabel("Time Elapsed (s)")
+div_B_y_label = r'$\nabla \cdot B$ / $\text{grid_length}^{-1}$'
+ax_div_B.set_ylabel(div_B_y_label)
+ax_div_B.set_xlabel("Time Elapsed / s")
 
 def init():
 
@@ -231,8 +239,8 @@ def update(frame):
     div_B_rms_line.set_data(time_history, div_B_rms)
     div_B_max_line.set_data(time_history, div_B_max)
 
-    update_mhd_properties, _ = prepare_snapshot_data(current_global_state, shape_data)
-
+    update_mhd_properties = prepare_snapshot_data(current_global_state, shape_data)
+    print(update_mhd_properties["by_2D"][10, 10])
     rho_heatmap.set_array(update_mhd_properties["rho_2D"])
     E_heatmap.set_array(update_mhd_properties["E_2D"])
     p_heatmap.set_array(update_mhd_properties["p_2D"])
@@ -263,11 +271,11 @@ ani = animation.FuncAnimation(
     repeat = True
 )
 
-#ani.save(
-#    "placeholder.gif",
-#    writer = "pillow",
-#    fps  = 1000,
-#    dpi = 100
-#)
+ani.save(
+    "decaying_magnetic_wave_full_dashboard.gif",
+    writer = "pillow",
+    fps  = 60,
+    dpi = 100
+)
 
 plt.show()
