@@ -144,6 +144,21 @@ by_heatmap = ax_by.imshow(
     interpolation = 'nearest'
 )
 
+ax_rho.set_xticks([]) 
+ax_rho.set_yticks([]) 
+ax_E.set_xticks([])
+ax_E.set_yticks([]) 
+ax_p.set_xticks([])
+ax_p.set_yticks([]) 
+ax_vx.set_xticks([])
+ax_vx.set_yticks([]) 
+ax_vy.set_xticks([]) 
+ax_vy.set_yticks([]) 
+ax_bx.set_xticks([]) 
+ax_bx.set_yticks([]) 
+ax_by.set_xticks([]) 
+ax_by.set_yticks([]) 
+
 rho_colourbar = fig.colorbar(rho_heatmap, ax = ax_rho, label = 'Density')
 E_colourbar = fig.colorbar(E_heatmap, ax = ax_E, label = 'Energy')
 p_colourbar = fig.colorbar(p_heatmap, ax = ax_p, label = 'Thermal Pressure')
