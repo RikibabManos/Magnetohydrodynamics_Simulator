@@ -1,6 +1,6 @@
 build/
 output/
-testData/
+plot_data/
 *.exe
 *.out
 *.dat
