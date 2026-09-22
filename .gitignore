@@ -1,1 +1,7 @@
-h
+build/
+output/
+plot_data/
+*.exe
+*.out
+*.dat
+*.gif
