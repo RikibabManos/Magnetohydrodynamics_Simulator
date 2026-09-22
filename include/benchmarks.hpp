@@ -262,7 +262,7 @@ void sausage_instability_initial_conditions(Grid& grid_si) {
 
             double r_dist = x_position - x_mid;
 
-            // m=0 perturbation modulation along the channel axis (y-direction)
+            // m = 0 perturbation modulation along the channel axis (y-direction)
             double perturbation = 1.0 - pertubation_amplitude * std::cos(pertubation_wavenumber * y_position);
 
             // background floor of 0.001 to prevent 0/0 division
@@ -326,7 +326,7 @@ void kink_instability_initial_conditions(Grid& grid_ki) {
             double rho = background_rho * envelope + 0.1; 
             double p = background_p   * envelope + 0.1;
 
-            // m=1 transverse velocity seed to trigger column displacement/buckling
+            // m = 1 transverse velocity seed to trigger column displacement/buckling
             double vx = velocity_pertubation_amplitude * std::sin(sinusoidal_wavenumber * y_position) * envelope;
             double vy = 0.0;
             double bx = 0.0;
