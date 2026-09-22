@@ -123,7 +123,7 @@ python scripts/temporal_error_plot.py
 - debugging
 
 ### **Aryan Parekh**
-* [GitHub](https://github.com/AryanPkh7)
+* [GitHub](https://github.com/AryanPkh-7)
 #### **Credit:**
 - Grid.hpp
 - HLL.hpp
