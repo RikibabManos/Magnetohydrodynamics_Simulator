@@ -1,6 +1,6 @@
 # Magnetohydrodynamics Simulator
 
-![Orszag Tang Benchmark Test](gif/OrszagTang_512x512_grid_densityOnlyWithStreamlines.gif)
+![Orszag Tang Benchmark Test](assets/OrszagTang_density_only.gif)
 
 ## Overview
 
@@ -60,7 +60,7 @@ Evaluates the solver's ability to model non-linear topological breakdowns in mag
 - **Setup & Physics:** Seeded via transverse displacement. Models field-line bunching on the inner radius of a bend, driving runaway $S$-shaped helical buckling toward domain boundaries.
 - **Numerical Robustness:** Confirms that the staggered-grid Upwind Constrained Transport (UCT) scheme maintains solenoidal field invariants during violent, high-gradient topological deformations
 
-![Kink Instability Test](gif/kink_instability_200x200_grid.gif)
+![Kink Instability Test](assets/kink_instability_full_dashboard.gif)
 ---
 
 ### 3. Diffusion & Operator Convergence: Decaying Magnetic Sine Wave
@@ -71,6 +71,8 @@ Verifies the accuracy and convergence order of the implicit Runge-Kutta staging 
   $$B(x, y, t) = B_0 \sin(k_x x) \sin(k_y y) e^{-\eta (k_x^2 + k_y^2)t}$$
 - **Convergence Verification:** Confirms second-order temporal convergence ($\mathcal{O}(\Delta t^2)$) of IMEX ARS(2,2,2) scheme by evaluating RMS error across increasing time interval steps.
 
+![Temporal_Error_Plot](assets/temporal_error_plot.png)
+
 ## Bulid
 
 ```bash
@@ -80,11 +82,12 @@ cd build
 cmake .. -DCMAKE_BUILD_TYPE=Release
 cmake --build . --config Release
 
-./mhd_sim             # On Linux / macOS
+./integrator_main             # on Linux / mac OS
 # OR
-.\Release\mhd_sim.exe # On Windows (MSVC)
+.\Release\integrator_main.exe # on Windows (MSVC)
 
 # python build
 cd ..
-python scripts/visualize.py
+python scripts/display_functions.py
+python scripts/plasma_display.py
 ```
