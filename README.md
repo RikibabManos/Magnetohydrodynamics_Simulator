@@ -77,17 +77,17 @@ Verifies the accuracy and convergence order of the implicit Runge-Kutta staging 
 
 ```bash
 # C++ build
-mkdir build
-cd build
+mkdir build && cd build
 cmake .. -DCMAKE_BUILD_TYPE=Release
 cmake --build . --config Release
 
-./integrator_main             # on Linux / mac OS
+# run C++ simulation
+./integrator_main              # on Linux / macOS
 # OR
-.\Release\integrator_main.exe # on Windows (MSVC)
+.\Release\integrator_main.exe  # on Windows (MSVC)
 
-# python build
+# run Python visualisations
 cd ..
 python scripts/display_functions.py
-python scripts/plasma_display.py
+python scripts/plasma_display.py    # only running general dashboard display 
 ```
