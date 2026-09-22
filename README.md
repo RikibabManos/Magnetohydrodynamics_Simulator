@@ -76,6 +76,8 @@ Verifies the accuracy and convergence order of the implicit Runge-Kutta staging 
 ## Bulid
 
 ```bash
+# download / clone github repo and cd to repo folder
+
 # C++ build
 mkdir build && cd build
 cmake .. -DCMAKE_BUILD_TYPE=Release
