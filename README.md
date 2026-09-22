@@ -100,6 +100,9 @@ python scripts/plasma_display_density_only.py
 python scripts/temporal_error_plot.py
 
 # make sure to delete pre-existing .dat files in /build/output when running new tests!
+# if you wish to rerun another test, change back into /build directory then run integrator_main (needed for files to be outputted correctly)
+cd ./build
+./integrator_main 
 
 # to run temporal variation test, run the Decaying Magnetic Sine Wave benchmark multiple times using constant time intervals,
 # with each time interval varying by a factor of 2. The example plot was found using time steps from 0.00015625 seconds to 0.01 seconds.
