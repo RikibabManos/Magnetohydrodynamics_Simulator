@@ -77,7 +77,8 @@ int main() {
 
         // uncomment the line below if you would like to see if the code is still working (if process seems to run slowly, or for whatever reason)
         //std::cout << "I'm still working!" << "\n";
-        double current_time_step = (time_interval_override == 0.0) ? CFL_condition_checker(global_state) : time_interval_override; 
+        double current_optimal_time_interval = CFL_condition_checker(global_state);
+        double current_time_step = (time_interval_override == 0.0) ? current_optimal_time_interval : time_interval_override; 
         
         if (current_sim_time + current_time_step > animation_duration) {current_time_step = animation_duration - current_sim_time;}
         
@@ -100,7 +101,7 @@ int main() {
 
         if (frame_index % snapshot_frequency == 0){
 
-            if (current_time_step > optimal_time_interval) {std::cout << "Current maximum safe time interval is: " << optimal_time_interval << ". Code may crash if entered time interval is not reduced!" << "\n";}
+            if (current_time_step > current_optimal_time_interval) {std::cout << "Current maximum safe time interval is: " << current_optimal_time_interval << ". Code may crash if entered time interval is not reduced!" << "\n";}
             std::cout << static_cast<int>(current_sim_time * 100.0 / animation_duration) << "% done..." << "\n";
 
             global_state.fillGhostPeriodic();
