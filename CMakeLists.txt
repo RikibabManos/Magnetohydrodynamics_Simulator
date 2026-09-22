@@ -8,18 +8,17 @@ find_package(Eigen3 REQUIRED)
 
 file(GLOB SOURCES "src/*.cpp")
 
-add_executable(mhd_sim ${SOURCES})
+add_executable(integrator_main ${SOURCES})
 
-target_include_directories(mhd_sim PRIVATE 
+target_include_directories(integrator_main PRIVATE 
     ${CMAKE_CURRENT_SOURCE_DIR}/include
     ${CMAKE_CURRENT_SOURCE_DIR}/src
-    ${EIGEN3_INCLUDE_DIRS}
 )
 
 if(MSVC)
-    target_compile_options(mhd_sim PRIVATE /O2 /fp:fast /arch:AVX2)
+    target_compile_options(integrator_main PRIVATE /O2 /fp:fast /arch:AVX2)
 else()
-    target_compile_options(mhd_sim PRIVATE -O3 -ffast-math -march=native)
+    target_compile_options(integrator_main PRIVATE -O3 -ffast-math -march=native)
 endif()
 
-target_link_libraries(mhd_sim PRIVATE Eigen3::Eigen)
+target_link_libraries(integrator_main PRIVATE Eigen3::Eigen)
