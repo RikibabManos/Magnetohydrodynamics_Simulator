@@ -233,8 +233,8 @@ ani = animation.FuncAnimation(
 #ani.save(
 #    "placeholder.gif",
 #    writer = "pillow",
-#    fps  = 1000,
-#    dpi = 100
+#    fps  = 60,
+#    dpi = 300
 #)
 
 plt.show()
