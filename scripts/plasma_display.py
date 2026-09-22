@@ -254,7 +254,6 @@ def update(frame):
     div_B_max_line.set_data(time_history, div_B_max)
 
     update_mhd_properties = prepare_snapshot_data(current_global_state, shape_data)
-    print(update_mhd_properties["by_2D"][10, 10])
     rho_heatmap.set_array(update_mhd_properties["rho_2D"])
     E_heatmap.set_array(update_mhd_properties["E_2D"])
     p_heatmap.set_array(update_mhd_properties["p_2D"])
