@@ -76,7 +76,7 @@ for folder in directories:
             chosen_actual_time = t_frame
 
     current_timestep_data = np.fromfile(best_file, dtype = np.float64)
-    current_properties_data, _ = prepare_snapshot_data(current_timestep_data, shape_data)
+    current_properties_data = prepare_snapshot_data(current_timestep_data, shape_data)
     current_by_data = current_properties_data["by_2D"]
 
     # generate the exact By field matrix
