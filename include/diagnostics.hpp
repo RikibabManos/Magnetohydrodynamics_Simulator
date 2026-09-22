@@ -91,7 +91,7 @@ void write_data_to_binary_file(Grid& grid_bin, int current_frame_index, int snap
 
     std::fstream binary_fout; 
     std::ostringstream ss;
-    ss << "snapshot_" << std::setw(6) << std::setfill('0') << current_frame_index << ".dat";
+    ss << "output/snapshot_" << std::setw(6) << std::setfill('0') << current_frame_index << ".dat";
     std::string filename = ss.str();
     binary_fout.open(filename, std::ios::out | std::ios::binary);
 
