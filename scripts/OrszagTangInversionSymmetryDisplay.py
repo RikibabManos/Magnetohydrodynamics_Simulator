@@ -331,10 +331,10 @@ ani = animation.FuncAnimation(
 )
 
 #ani.save(
-#    "OrszagTang_symmetry_test.gif",
+#    "placeholder.gif",
 #    writer = "pillow",
 #    fps  = 60,
-#    dpi = 100
+#    dpi = 300
 #)
 
 plt.show()
