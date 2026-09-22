@@ -109,3 +109,24 @@ python scripts/temporal_error_plot.py
 # Plot will similar to an exponential at first, you must manually adjust for spatial floor
 # (see temporal_error_plot.py comments for more information)
 ```
+
+## Authors
+
+### **Babikir Osman**
+* [GitHub](https://github.com/RikibabManos)
+* [LinkedIn](https://www.linkedin.com/in/babikir-osman-8a4261282)
+#### **Credit:**
+- All python visualisation
+- diagnostics.hpp
+- solvers.hpp
+- benchmarks.hpp
+- integrator_main.cpp
+- asset generation
+- debugging
+
+### **Aryan Parekh**
+* [GitHub](https://github.com/AryanPkh7)
+#### **Credit:**
+- Grid.hpp
+- HLL.hpp
+- MUSCL.hpp
