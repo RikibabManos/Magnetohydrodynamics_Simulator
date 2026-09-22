@@ -65,6 +65,8 @@ rho_heatmap = ax_rho.imshow(
     interpolation = 'bilinear'
 )
 
+ax_rho.set_xticks([])
+ax_rho.set_yticks([])
 ax_rho.set_xlim(0, x_node_count * cell_width)
 ax_rho.set_ylim(0, y_node_count * cell_height)
  
