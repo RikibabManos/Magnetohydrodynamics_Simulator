@@ -103,5 +103,9 @@ python scripts/temporal_error_plot.py
 
 # make sure to delete pre-existing .dat files in /build/output when running new tests!
 
-# to run temporal variation test, run the Decaying Magnetic Sine Wave benchmark multiple times using constant time intervals, with each time interval varying by a factor of 2. The example plot was found using time steps from 0.00015625 seconds to 0.01 seconds. Then place the data for each run in one of the /plot_data/timestep* directories. Plot will similar to an exponential at first, you must manually adjust for spatial floor (see temporal_error_plot.py comments for more information)
+# to run temporal variation test, run the Decaying Magnetic Sine Wave benchmark multiple times using constant time intervals,
+# with each time interval varying by a factor of 2. The example plot was found using time steps from 0.00015625 seconds to 0.01 seconds.
+# Then place the data for each run in one of the /plot_data/timestep* directories.
+# Plot will similar to an exponential at first, you must manually adjust for spatial floor
+# (see temporal_error_plot.py comments for more information)
 ```
