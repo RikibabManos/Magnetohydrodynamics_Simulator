@@ -113,7 +113,7 @@ ax_div_B.set_ylim(0, max(greatest_div_B, 1e-15))
 #    arrowsize = 0.8
 #)
 
-stride_size = 32 # plots a quiver every 'stride' nodes
+stride_size = 16 # plots a quiver every 'stride' nodes
 offset = cell_width / 2 # offset required so that over and underlayer quivers do not overlap on same coordinate, otherwise they will blend together only showing black
 
 magnetic_streamlines_underlayer = ax_rho.quiver(
