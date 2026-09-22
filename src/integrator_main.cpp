@@ -22,7 +22,7 @@ int main() {
     auto start_time = std::chrono::high_resolution_clock::now();
 
     // --- MAIN TWEAKABLE PROPERTIES ---
-    const double animation_duration = 3.0; // seconds
+    const double animation_duration = 5.0; // seconds
     const double time_interval_override = 0.0; // seconds, make this != 0.0 if you would like to specify a specific, constant time-step, otherwise when 0.0 the code will utilise a dynamic time step
     const double resistivity = 0.0; // units: grid_length^2 * seconds^-1. note that the speed of the code will significantly decrease if resitivity is non-zero AND time step is variable
     const int snapshot_frequency = 20; // the code will only write binary file data every 'snapshot_frequency' iterations, smaller values lead to a higher resolution, but use more memory (more .dat files)
