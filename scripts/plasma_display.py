@@ -285,10 +285,10 @@ ani = animation.FuncAnimation(
 )
 
 #ani.save(
-#    "decaying_magnetic_wave_full_dashboard.gif",
+#    "placeholder.gif",
 #    writer = "pillow",
 #    fps  = 60,
-#    dpi = 100
+#    dpi = 300
 #)
 
 plt.show()
