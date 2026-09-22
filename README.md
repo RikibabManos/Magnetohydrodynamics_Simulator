@@ -74,8 +74,10 @@ $$
 
 ## Bulid
 
-```bash
-# download / clone github repo and cd to repo folder
+```bash 
+# download zip / clone github repo and cd to repo folder
+git clone https://github.com/RikibabManos/Magnetohydrodynamics_Simulator.git
+cd Magnetohydrodynamics_Simulator
 
 # C++ build
 mkdir build && cd build
