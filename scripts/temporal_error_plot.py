@@ -11,19 +11,22 @@ def exact_function(x_coordinate, y_coordinate, physical_grid_width, physical_gri
     resistivity = 10.0
     kx = 2 * np.pi / physical_grid_width  
     ky = 2 * np.pi / physical_grid_height
+    
     return by_amplitude * np.sin(kx * x_coordinate) * np.sin(ky * y_coordinate) * np.exp(- resistivity * (kx * kx + ky * ky) * current_time)
 
 
 target_sim_time = 0.05 # seconds (simulation time which log-log plot will pick data from)
 
-directories = [
-    r"/home/true-sigma/GithubClones/Magnetohydrodynamics_Simulator/testData/decayingMagneticWave_0.01_secondTimeStep/*.dat",
-    r"/home/true-sigma/GithubClones/Magnetohydrodynamics_Simulator/testData/decayingMagneticWave_0.005_secondTimeStep/*.dat",
-    r"/home/true-sigma/GithubClones/Magnetohydrodynamics_Simulator/testData/decayingMagneticWave_0.0025_secondTimeStep/*.dat",
-    r"/home/true-sigma/GithubClones/Magnetohydrodynamics_Simulator/testData/decayingMagneticWave_0.00125_secondTimeStep/*.dat",
-    r"/home/true-sigma/GithubClones/Magnetohydrodynamics_Simulator/testData/decayingMagneticWave_0.000625_secondTimeStep/*.dat",
-    r"/home/true-sigma/GithubClones/Magnetohydrodynamics_Simulator/testData/decayingMagneticWave_0.0003125_secondTimeStep/*.dat",
-    r"/home/true-sigma/GithubClones/Magnetohydrodynamics_Simulator/testData/decayingMagneticWave_0.00015625_secondTimeStep/*.dat"
+script_dir = Path(__file__).parent
+output_dir = script_dir.parent / "build/plot_data" 
+directories = [ # more directories can be added if made, emoty directories will be skipped
+    str(output_dir / "timestep1/snapshot_*.dat"),
+    str(output_dir / "timestep2/snapshot_*.dat"),
+    str(output_dir / "timestep3/snapshot_*.dat"),
+    str(output_dir / "timestep4/snapshot_*.dat"),
+    str(output_dir / "timestep5/snapshot_*.dat"),
+    str(output_dir / "timestep6/snapshot_*.dat"),
+    str(output_dir / "timestep7/snapshot_*.dat")
 ]
 
 error_data = []
@@ -35,7 +38,9 @@ for folder in directories:
     current_timestep_snapshot.sort()
 
     if not current_timestep_snapshot:
+        
         print(f"Skipping empty or missing directory: {folder}")
+        
         continue
 
     # the only data we are interested in for this log log plot is the time step value and the by field
