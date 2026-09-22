@@ -7,9 +7,8 @@ from pathlib import Path
 from display_functions import prepare_snapshot_data, get_global_extrema
 
 script_dir = Path(__file__).parent
-output_dir = script_dir.parent #/ "build/output" 
-data_file_list = glob.glob("/home/true-sigma/GithubClones/Magnetohydrodynamics_Simulator/snapshot_*.dat")
-#print(data_file_list)
+output_dir = script_dir.parent / "build/output" 
+data_file_list = glob.glob(str(output_dir / "snapshot_*.dat"))
 data_file_list.sort()
 global_data_initial = np.fromfile(data_file_list[0], dtype = np.float64) # extract data from initial file to find header data and initial state
 
@@ -271,11 +270,11 @@ ani = animation.FuncAnimation(
     repeat = True
 )
 
-ani.save(
-    "decaying_magnetic_wave_full_dashboard.gif",
-    writer = "pillow",
-    fps  = 60,
-    dpi = 100
-)
+#ani.save(
+#    "decaying_magnetic_wave_full_dashboard.gif",
+#    writer = "pillow",
+#    fps  = 60,
+#    dpi = 100
+#)
 
 plt.show()
