@@ -81,6 +81,8 @@ mkdir build && cd build
 cmake .. -DCMAKE_BUILD_TYPE=Release
 cmake --build . --config Release
 
+mkdir -p output
+
 # run C++ simulation
 ./integrator_main              # on Linux / macOS
 # OR
