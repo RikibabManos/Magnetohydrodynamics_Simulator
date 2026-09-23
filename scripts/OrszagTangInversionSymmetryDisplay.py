@@ -262,7 +262,8 @@ def update(frame):
         div_B_max.clear()
 
     current_global_state = np.fromfile(data_file_list[frame], dtype = np.float64)
-    current_time = (frame + 1) * int(frame_rate) * time_between_frames
+    current_timestep = current_global_state[6]
+    current_time = (frame + 1) * int(frame_rate) * current_timestep
     time_history.append(current_time)
     main_title.set_text(f"2D MHD Simulation Dashboard (Time: {time_history[-1]:.3f}s)")
 
