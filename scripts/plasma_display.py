@@ -245,7 +245,7 @@ def update(frame):
     
     current_global_state = np.fromfile(data_file_list[frame], dtype = np.float64)
     current_timestep = current_global_state[6]
-    current_time = frame * int(frame_rate) * current_time_step
+    current_time = frame * int(frame_rate) * current_timestep
     time_history.append(current_time)
     main_title.set_text(f"2D MHD Simulation Dashboard (Time: {current_time:.3f}s)")
 
